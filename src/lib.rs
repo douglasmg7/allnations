@@ -1,20 +1,53 @@
 use once_cell::sync::OnceCell;
-// use serde::{Deserialize, Serialize};
-// use serde_xml_rs::{from_str, to_string};
-// use serde_xml_rs;
 use std::env;
-use std::io::{self, Read};
-
+use std::io::{self};
 use xml::reader::{EventReader, XmlEvent};
 
-// #[macro_use]
-// extern crate serde_derive;
-
+// Production mode.
 static PRODUCTION: OnceCell<bool> = OnceCell::new();
+static DEFAULT_TIMESTAMP: &str = "0000-01-01T00:00:00-00:00";
 
-#[derive(Debug, Default)]
+impl Product {
+    fn new() -> Self {
+        Product {
+            // timestamp: chrono::FixedOffset::west(3),
+            // timestamp: chrono::Utc::now(),
+            timestamp: chrono::DateTime::parse_from_rfc3339(DEFAULT_TIMESTAMP)
+                .expect(&format!("Error parsing: {}", DEFAULT_TIMESTAMP)),
+            department: String::new(),
+            category: String::new(),
+            sub_category: String::new(),
+            maker: String::new(),
+            code: String::new(),
+            description: String::new(),
+            description_tec: String::new(),
+            part_number: String::new(),
+            ean: String::new(),
+            warranty_month: 0,
+            weight_g: 0,
+            price_sale: 0,
+            price_without_st: 0,
+            availability: false,
+            url_image: String::new(),
+            // RJ, SC or ES.
+            stock_origin: String::new(),
+            ncm: String::new(),
+            width_mm: 0,
+            height_mm: 0,
+            depth_mm: 0,
+            active: false,
+            icms_st_taxation: false,
+            // Nacional, importado, entre outros...
+            origin: String::new(),
+            stock_qtd: 0,
+        }
+    }
+}
+
+// Aldo product.
+#[derive(Debug)]
 struct Product {
-    timestamp: String,
+    timestamp: chrono::DateTime<chrono::offset::FixedOffset>,
     department: String,
     category: String,
     sub_category: String,
@@ -24,23 +57,26 @@ struct Product {
     description_tec: String,
     part_number: String,
     ean: String,
-    warranty: String,
-    weight_kg: f64,
-    price_sale: f64,
-    price_no_st: f64,
+    warranty_month: i32,
+    weight_g: i32,
+    price_sale: i32,
+    price_without_st: i32,
     availability: bool,
     url_image: String,
-    stock: i32,
+    // RJ, SC or ES.
+    stock_origin: String,
     ncm: String,
     width_mm: i32,
     height_mm: i32,
-    deep_mm: i32,
+    depth_mm: i32,
     active: bool,
-    tax_substitute: String,
+    icms_st_taxation: bool,
+    // Nacional, importado, entre outros...
     origin: String,
-    available_stock: bool,
+    stock_qtd: i32,
 }
 
+// Set run mode.
 pub fn set_run_mode() {
     // Set run mode.
     match env::var_os("RUN_MODE") {
@@ -67,6 +103,7 @@ pub fn set_run_mode() {
     );
 }
 
+// If in production mode.
 pub fn is_production() -> bool {
     if *PRODUCTION.get().expect("Run mode not defined") {
         return true;
@@ -75,6 +112,7 @@ pub fn is_production() -> bool {
     }
 }
 
+// Read xml from stdin.
 pub fn read_stdin() -> io::Result<()> {
     // let mut buffer = String::new();
     let stdin = io::stdin();
@@ -84,7 +122,7 @@ pub fn read_stdin() -> io::Result<()> {
     let mut tag = String::new();
     let mut inside_product = false;
     let mut products: Vec<Product> = Vec::new();
-    let mut product = Product::default();
+    let mut product = Product::new();
     for e in parser {
         match e {
             Ok(XmlEvent::StartElement { name, .. }) => {
@@ -99,7 +137,10 @@ pub fn read_stdin() -> io::Result<()> {
                 }
             }
             Ok(XmlEvent::Characters(text)) => match tag.as_str() {
-                "TIMESTAMP" => product.timestamp = text.clone(),
+                "TIMESTAMP" => {
+                    product.timestamp = chrono::DateTime::parse_from_rfc3339(&text)
+                        .expect(&format!("Invalid TIMESTAMP: {}", text));
+                }
                 "DEPARTAMENTO" => product.department = text.clone(),
                 "CATEGORIA" => product.category = text.clone(),
                 "SUBCATEGORIA" => product.sub_category = text.clone(),
@@ -109,27 +150,72 @@ pub fn read_stdin() -> io::Result<()> {
                 "DESCRTEC" => product.description_tec = text.clone(),
                 "PARTNUMBER" => product.part_number = text.clone(),
                 "EAN" => product.ean = text.clone(),
-                "GARANTIA" => product.warranty = text.clone(),
-                "PESOKG" => product.weight_kg = text.clone(),
-                "PRECOREVENDA" => product.price_sale = text.clone(),
-                "PRECOSEMST" => product.price_no_st = text.clone(),
-                "DISPONIVEL" => product.availability = text.clone(),
+                "GARANTIA" => {
+                    product.warranty_month = text
+                        .parse::<i32>()
+                        .expect(&format!("Invalid GARANTIA: {}", text));
+                }
+                "PESOKG" => {
+                    product.weight_g = (1000.0
+                        * text
+                            .parse::<f32>()
+                            .expect(&format!("Invalid PESOKG: {}", text)))
+                        as i32;
+                }
+                "PRECOREVENDA" => {
+                    product.price_sale = (100.0
+                        * text
+                            .parse::<f32>()
+                            .expect(&format!("Invalid PRECOREVENDA: {}", text)))
+                        as i32;
+                }
+                "PRECOSEMST" => {
+                    product.price_without_st = (100.0
+                        * text
+                            .parse::<f32>()
+                            .expect(&format!("Invalid PRECOSEMST: {}", text)))
+                        as i32;
+                }
+                "DISPONIVEL" => product.availability = text == "1",
                 "URLFOTOPRODUTO" => product.url_image = text.clone(),
-                "ESTOQUE" => product.stock = text.clone(),
+                "ESTOQUE" => product.stock_origin = text.clone(),
                 "NCM" => product.ncm = text.clone(),
-                "LARGURA" => product.width_mm = text.clone(),
-                "ALTURA" => product.height_mm = text.clone(),
-                "PROFUNDIDADE" => product.deep_mm = text.clone(),
-                "ATIVO" => product.active = text.clone(),
-                "SUBSTTRIBUTARIA" => product.tax_substitute = text.clone(),
+                "LARGURA" => {
+                    product.width_mm = (1000.0
+                        * text
+                            .parse::<f32>()
+                            .expect(&format!("Invalid LARGURA: {}", text)))
+                        as i32;
+                }
+                "ALTURA" => {
+                    product.height_mm = (1000.0
+                        * text
+                            .parse::<f32>()
+                            .expect(&format!("Invalid ALTURA: {}", text)))
+                        as i32;
+                }
+                "PROFUNDIDADE" => {
+                    product.depth_mm = (1000.0
+                        * text
+                            .parse::<f32>()
+                            .expect(&format!("Invalid PROFUNDIDADE: {}", text)))
+                        as i32;
+                }
+                "ATIVO" => product.active = text == "1",
+                "SUBSTTRIBUTARIA" => product.icms_st_taxation = text == "1",
                 "ORIGEMPRODUTO" => product.origin = text.clone(),
-                "ESTOQUEDISPONIVEL" => product.available_stock = text.clone(),
+                "ESTOQUEDISPONIVEL" => {
+                    product.stock_qtd = (text
+                        .parse::<f32>()
+                        .expect(&format!("Invalid ESTOQUEDISPONIVEL: {}", text)))
+                        as i32
+                }
                 _ => {}
             },
             Ok(XmlEvent::EndElement { name }) => {
                 if name.local_name.eq("Produtos") {
                     products.push(product);
-                    product = Product::default();
+                    product = Product::new();
                     inside_product = false;
                 }
             }
