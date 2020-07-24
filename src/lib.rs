@@ -1,11 +1,44 @@
 use once_cell::sync::OnceCell;
 use std::env;
+use std::fmt;
 use std::io::{self};
 use xml::reader::{EventReader, XmlEvent};
 
 // Production mode.
 static PRODUCTION: OnceCell<bool> = OnceCell::new();
 static DEFAULT_TIMESTAMP: &str = "0000-01-01T00:00:00-00:00";
+
+// Aldo product.
+#[derive(Debug)]
+struct Product {
+    timestamp: chrono::DateTime<chrono::offset::FixedOffset>,
+    department: String,
+    category: String,
+    sub_category: String,
+    maker: String,
+    code: String,
+    description: String,
+    description_tec: String,
+    part_number: String,
+    ean: String,
+    warranty_month: i32,
+    weight_g: i32,
+    price_sale: i32,
+    price_without_st: i32,
+    availability: bool,
+    url_image: String,
+    // RJ, SC or ES.
+    stock_origin: String,
+    ncm: String,
+    width_mm: i32,
+    height_mm: i32,
+    depth_mm: i32,
+    active: bool,
+    icms_st_taxation: bool,
+    // Nacional, importado, entre outros...
+    origin: String,
+    stock_qtd: i32,
+}
 
 impl Product {
     fn new() -> Self {
@@ -44,37 +77,11 @@ impl Product {
     }
 }
 
-// Aldo product.
-#[derive(Debug)]
-struct Product {
-    timestamp: chrono::DateTime<chrono::offset::FixedOffset>,
-    department: String,
-    category: String,
-    sub_category: String,
-    maker: String,
-    code: String,
-    description: String,
-    description_tec: String,
-    part_number: String,
-    ean: String,
-    warranty_month: i32,
-    weight_g: i32,
-    price_sale: i32,
-    price_without_st: i32,
-    availability: bool,
-    url_image: String,
-    // RJ, SC or ES.
-    stock_origin: String,
-    ncm: String,
-    width_mm: i32,
-    height_mm: i32,
-    depth_mm: i32,
-    active: bool,
-    icms_st_taxation: bool,
-    // Nacional, importado, entre outros...
-    origin: String,
-    stock_qtd: i32,
-}
+// impl fmt::Display for Product {
+// fn fmt(&self, f: &mut fmt::Formatter<'_> -> fmt::Result {
+
+// }
+// }
 
 // Set run mode.
 pub fn set_run_mode() {
