@@ -1,5 +1,7 @@
 use once_cell::sync::OnceCell;
 use std::env;
+// use std::io::prelude::*;
+use std::io::{self, Read};
 
 static PRODUCTION: OnceCell<bool> = OnceCell::new();
 
@@ -35,4 +37,11 @@ pub fn is_production() -> bool {
     } else {
         return false;
     }
+}
+
+pub fn read_test() -> io::Result<()> {
+    let mut buffer = String::new();
+    io::stdin().read_to_string(&mut buffer)?;
+    // println!("stdin: {}", buffer);
+    Ok(())
 }

@@ -1,5 +1,6 @@
 fn main() {
     allnations::set_run_mode();
+    allnations::read_test().unwrap();
 
     // // Config.
     // let config = Config::new(env::args()).unwrap_or_else(|err| {
