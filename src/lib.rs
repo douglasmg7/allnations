@@ -1,7 +1,7 @@
 use once_cell::sync::OnceCell;
 use std::env;
-// use std::io::prelude::*;
 use std::io::{self, Read};
+use xml::reader::{EventReader, XmlEvent};
 
 static PRODUCTION: OnceCell<bool> = OnceCell::new();
 
@@ -39,9 +39,25 @@ pub fn is_production() -> bool {
     }
 }
 
-pub fn read_test() -> io::Result<()> {
-    let mut buffer = String::new();
-    io::stdin().read_to_string(&mut buffer)?;
+pub fn read_stdin() -> io::Result<()> {
+    // let mut buffer = String::new();
+    let stdin = io::stdin();
+    let handle = stdin.lock();
+    let parser = EventReader::new(handle);
+    for e in parser {
+        match e {
+            Ok(XmlEvent::StartElement { name, .. }) => {
+                println!("Name: {}", name);
+            }
+            Err(e) => {
+                println!("Error: {}", e);
+                break;
+            }
+            _ => {}
+        }
+    }
+
+    // handle.read_to_string(&mut buffer)?;
     // println!("stdin: {}", buffer);
     Ok(())
 }
