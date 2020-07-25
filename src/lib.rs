@@ -11,77 +11,83 @@ static DEFAULT_TIMESTAMP: &str = "0000-01-01T00:00:00-00:00";
 // Aldo product.
 #[derive(Debug)]
 struct Product {
+    code: String,
+    description: String,
     timestamp: chrono::DateTime<chrono::offset::FixedOffset>,
     department: String,
     category: String,
     sub_category: String,
     maker: String,
-    code: String,
-    description: String,
     description_tec: String,
+    url_image: String,
     part_number: String,
     ean: String,
-    warranty_month: i32,
-    weight_g: i32,
+    ncm: String,
     price_sale: i32,
     price_without_st: i32,
-    availability: bool,
-    url_image: String,
-    // RJ, SC or ES.
-    stock_origin: String,
-    ncm: String,
+    icms_st_taxation: bool,
+    warranty_month: i32,
     width_mm: i32,
     height_mm: i32,
     depth_mm: i32,
+    weight_g: i32,
     active: bool,
-    icms_st_taxation: bool,
-    // Nacional, importado, entre outros...
-    origin: String,
+    availability: bool,
+    origin: String,     // Nacional, importado, entre outros...
+    stock_origin: String,   // RJ, SC or ES.
     stock_qtd: i32,
 }
 
 impl Product {
     fn new() -> Self {
         Product {
-            // timestamp: chrono::FixedOffset::west(3),
-            // timestamp: chrono::Utc::now(),
+            code: String::new(),
+            description: String::new(),
             timestamp: chrono::DateTime::parse_from_rfc3339(DEFAULT_TIMESTAMP)
                 .expect(&format!("Error parsing: {}", DEFAULT_TIMESTAMP)),
             department: String::new(),
             category: String::new(),
             sub_category: String::new(),
             maker: String::new(),
-            code: String::new(),
-            description: String::new(),
             description_tec: String::new(),
+            url_image: String::new(),
             part_number: String::new(),
             ean: String::new(),
-            warranty_month: 0,
-            weight_g: 0,
+            ncm: String::new(),
             price_sale: 0,
             price_without_st: 0,
-            availability: false,
-            url_image: String::new(),
-            // RJ, SC or ES.
-            stock_origin: String::new(),
-            ncm: String::new(),
+            icms_st_taxation: false,
+            warranty_month: 0,
             width_mm: 0,
             height_mm: 0,
             depth_mm: 0,
+            weight_g: 0,
             active: false,
-            icms_st_taxation: false,
-            // Nacional, importado, entre outros...
+            availability: false,
             origin: String::new(),
+            stock_origin: String::new(),
             stock_qtd: 0,
         }
     }
 }
 
-// impl fmt::Display for Product {
-// fn fmt(&self, f: &mut fmt::Formatter<'_> -> fmt::Result {
-
-// }
-// }
+impl fmt::Display for Product {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "[product]\n\tcode: {}\n\tdescription: {}\n\ttimestamp: {}\n\tdepartment: {}\n\tcategory: {}\n\tsub_category: {}\n\tmaker: {}\n\tdescription_tec bytes count: {}\
+            \n\turl_image: {}\n\tpart_number: {}\n\tean: {}\n\tncm: {}\
+            \n\tprice_sale: {}\n\tprice_without_st: {}\n\ticms_st_taxation: {}\n\twarranty_month: {}\
+            \n\twidth_mm: {}\n\theight_mm: {}\n\tdepth_mm: {}\n\tweight_g: {}\
+            \n\tactive: {}\n\tavailability: {}\n\torigin: {}\n\tstock_origin: {}\n\tstock_qtd: {}",
+            self.code, self.description, self.timestamp, self.department, self.category, self.sub_category, self.maker, self.description_tec.len(), 
+            self.url_image, self.part_number, self.ean, self.ncm,
+            self.price_sale, self.price_without_st, self.icms_st_taxation, self.warranty_month,
+            self.width_mm, self.height_mm, self.depth_mm, self.weight_g,
+            self.active, self.availability, self.origin, self.stock_origin, self.stock_qtd 
+        )
+    }
+}
 
 // Set run mode.
 pub fn set_run_mode() {
@@ -235,11 +241,12 @@ pub fn read_stdin() -> io::Result<()> {
     }
     // println!("Products: {:?}", products);
     for i in 0..3 {
-        println!("Cound: {}", i);
-        println!(
-            "Product: {} - {}",
-            products[i].code, products[i].description
-        );
+        println!("{}", products[i]);
+        // println!("Cound: {}", i);
+        // println!(
+        // "Product: {} - {}",
+        // products[i].code, products[i].description
+        // );
     }
     println!("-Products quantity: {}", products.len());
 
