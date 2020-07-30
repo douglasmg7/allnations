@@ -1,16 +1,19 @@
+use chrono::{DateTime, FixedOffset};
 use std::fmt;
+
+static ZERO_TIME: &str = "0000-01-02T00:00:00-03:00";
 
 // Aldo product.
 #[derive(Debug)]
 pub struct Product {
     pub code: String,
     pub description: String,
-    pub timestamp: chrono::DateTime<chrono::offset::FixedOffset>,
+    pub timestamp: DateTime<FixedOffset>,
     pub department: String,
     pub category: String,
     pub sub_category: String,
     pub maker: String,
-    pub description_tec: String,
+    pub technical_description: String,
     pub url_image: String,
     pub part_number: String,
     pub ean: String,
@@ -19,28 +22,33 @@ pub struct Product {
     pub price_without_st: i32,
     pub icms_st_taxation: bool,
     pub warranty_month: i32,
+    pub length_mm: i32,
     pub width_mm: i32,
     pub height_mm: i32,
-    pub depth_mm: i32,
     pub weight_g: i32,
     pub active: bool,
     pub availability: bool,
     pub origin: String,     // Nacional, importado, entre outros...
     pub stock_origin: String,   // RJ, SC or ES.
     pub stock_qtd: i32,
+    pub created_at: DateTime<FixedOffset>,
+    pub changed_at: DateTime<FixedOffset>,
+    pub removed_at: DateTime<FixedOffset>,
+    pub checked_at: DateTime<FixedOffset>,
 }
 
 impl Product {
     pub fn new() -> Self {
+        // let t0 = timestamp: chrono::DateTime::parse_from_rfc3339("0000-01-01T00:00:00-00:00").unwrap();
         Product {
             code: String::new(),
             description: String::new(),
-            timestamp: chrono::DateTime::parse_from_rfc3339("0000-01-01T00:00:00-00:00") .unwrap(),
+            timestamp: DateTime::parse_from_rfc3339(ZERO_TIME).unwrap(),
             department: String::new(),
             category: String::new(),
             sub_category: String::new(),
             maker: String::new(),
-            description_tec: String::new(),
+            technical_description: String::new(),
             url_image: String::new(),
             part_number: String::new(),
             ean: String::new(),
@@ -49,15 +57,19 @@ impl Product {
             price_without_st: 0,
             icms_st_taxation: false,
             warranty_month: 0,
+            length_mm: 0,
             width_mm: 0,
             height_mm: 0,
-            depth_mm: 0,
             weight_g: 0,
             active: false,
             availability: false,
             origin: String::new(),
             stock_origin: String::new(),
             stock_qtd: 0,
+            created_at: DateTime::parse_from_rfc3339(ZERO_TIME).unwrap(),
+            changed_at: DateTime::parse_from_rfc3339(ZERO_TIME).unwrap(),
+            removed_at: DateTime::parse_from_rfc3339(ZERO_TIME).unwrap(),
+            checked_at: DateTime::parse_from_rfc3339(ZERO_TIME).unwrap(),
         }
     }
 }
@@ -66,15 +78,15 @@ impl fmt::Display for Product {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
-            "[product]\n\tcode: {}\n\tdescription: {}\n\ttimestamp: {}\n\tdepartment: {}\n\tcategory: {}\n\tsub_category: {}\n\tmaker: {}\n\tdescription_tec bytes count: {}\
+            "[product]\n\tcode: {}\n\tdescription: {}\n\ttimestamp: {}\n\tdepartment: {}\n\tcategory: {}\n\tsub_category: {}\n\tmaker: {}\n\ttechnical_description bytes count: {}\
             \n\turl_image: {}\n\tpart_number: {}\n\tean: {}\n\tncm: {}\
             \n\tprice_sale: {}\n\tprice_without_st: {}\n\ticms_st_taxation: {}\n\twarranty_month: {}\
-            \n\twidth_mm: {}\n\theight_mm: {}\n\tdepth_mm: {}\n\tweight_g: {}\
+            \n\tlength_mm: {}\n\twidth_mm: {}\n\theight_mm: {}\n\tweight_g: {}\
             \n\tactive: {}\n\tavailability: {}\n\torigin: {}\n\tstock_origin: {}\n\tstock_qtd: {}",
-            self.code, self.description, self.timestamp, self.department, self.category, self.sub_category, self.maker, self.description_tec.len(), 
+            self.code, self.description, self.timestamp, self.department, self.category, self.sub_category, self.maker, self.technical_description.len(), 
             self.url_image, self.part_number, self.ean, self.ncm,
             self.price_sale, self.price_without_st, self.icms_st_taxation, self.warranty_month,
-            self.width_mm, self.height_mm, self.depth_mm, self.weight_g,
+            self.length_mm, self.width_mm, self.height_mm, self.weight_g,
             self.active, self.availability, self.origin, self.stock_origin, self.stock_qtd 
         )
     }
@@ -114,7 +126,7 @@ pub fn products_from_xml<T: std::io::Read>(xml: T) -> Vec<Product> {
                 "FABRICANTE" => product.maker = text.clone(),
                 "CODIGO" => product.code = text.clone(),
                 "DESCRICAO" => product.description = text.clone(),
-                "DESCRTEC" => product.description_tec = text.clone(),
+                "DESCRTEC" => product.technical_description = text.clone(),
                 "PARTNUMBER" => product.part_number = text.clone(),
                 "EAN" => product.ean = text.clone(),
                 "GARANTIA" => {
@@ -162,7 +174,7 @@ pub fn products_from_xml<T: std::io::Read>(xml: T) -> Vec<Product> {
                         as i32;
                 }
                 "PROFUNDIDADE" => {
-                    product.depth_mm = (1000.0
+                    product.length_mm = (1000.0
                         * text
                             .parse::<f32>()
                             .expect(&format!("Invalid PROFUNDIDADE: {}", text)))

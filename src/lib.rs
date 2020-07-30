@@ -2,11 +2,22 @@ use once_cell::sync::OnceCell;
 
 // Production mode.
 static PRODUCTION: OnceCell<bool> = OnceCell::new();
+static DB_FILE: OnceCell<String> = OnceCell::new();
 
-pub mod xml;
+pub mod db;
+pub mod product;
 
 // Set run mode.
 pub fn set_run_mode() {
+    // Database location.
+    DB_FILE
+        .set(format!(
+            "{}/db/{}",
+            std::env::var("ZUNKAPATH").expect("Environment variable ZUNKPATH"),
+            std::env::var("ZUNKA_ALLNATIONS_DB").expect("Environment variable ZUNKA_ALLNATIONS_DB")
+        ))
+        .unwrap();
+    println!("Database location: {}", DB_FILE.get().unwrap());
     // Set run mode.
     match std::env::var_os("RUN_MODE") {
         Some(val) => {
