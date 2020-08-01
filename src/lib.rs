@@ -11,11 +11,9 @@ pub mod product;
 pub fn set_run_mode() {
     // Database location.
     DB_FILE
-        .set(format!(
-            "{}/db/{}",
-            std::env::var("ZUNKAPATH").expect("Environment variable ZUNKPATH"),
-            std::env::var("ZUNKA_ALLNATIONS_DB").expect("Environment variable ZUNKA_ALLNATIONS_DB")
-        ))
+        .set(
+            std::env::var("ZUNKA_ALLNATIONS_DB").expect("Environment variable ZUNKA_ALLNATIONS_DB"),
+        )
         .unwrap();
     println!("Database location: {}", DB_FILE.get().unwrap());
     // Set run mode.
