@@ -10,8 +10,9 @@ cd ..
 # Last downloaded XML file.
 FILE=$ZUNKAPATH/xml/allnations/allnations-products.xml
 
-if [[ $RUN_MODE == production ]]; then
-    RUN_MODE=production allnations < $FILE
+# if [[ $RUN_MODE == production ]]; then
+if [[ $1 == "-p" ]]; then
+    allnations -p < $FILE
 else
     cargo run < $FILE
 fi
