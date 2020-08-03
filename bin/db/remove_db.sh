@@ -12,5 +12,5 @@ if [ -z "$ZUNKA_ALLNATIONS_DB" ]; then
 	exit 1 
 fi
 
-printf "Removing db %s/%s\n" $ZUNKAPATH/db/$ZUNKA_ALLNATIONS_DB
-rm $ZUNKAPATH/db/$ZUNKA_ALLNATIONS_DB
+printf "Removing db %s/%s\n" $ZUNKA_ALLNATIONS_DB
+rm $ZUNKA_ALLNATIONS_DB

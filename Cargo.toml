@@ -9,4 +9,5 @@ edition = "2018"
 [dependencies]
 chrono = "0.4.13"
 xml-rs = "0.8.3"
-rusqlite = "0.23.1"
+rusqlite = { version = "0.23.1", features = ["chrono"] }
+time = "0.2.16"

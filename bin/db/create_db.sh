@@ -12,11 +12,9 @@ if [ -z "$ZUNKA_ALLNATIONS_DB" ]; then
 	exit 1 
 fi
 
-DB=$ZUNKAPATH/db/$ZUNKA_ALLNATIONS_DB
-
 # Create db if not exist.
-if [[ ! -f $DB ]]; then
-	echo Creating $DB
+if [[ ! -f $ZUNKA_ALLNATIONS_DB ]]; then
+	echo Creating $ZUNKA_ALLNATIONS_DB
     mkdir -p $ZUNKAPATH/db
-    sqlite3 $DB < $(dirname $0)/tables.sql
+    sqlite3 $ZUNKA_ALLNATIONS_DB < $(dirname $0)/tables.sql
 fi

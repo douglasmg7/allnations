@@ -1,7 +1,7 @@
 use chrono::{DateTime, FixedOffset};
 use std::fmt;
 
-static ZERO_TIME: &str = "0000-01-02T00:00:00-03:00";
+const ZERO_TIME: &str = "0001-01-01T03:00:00-03:00";
 
 // Aldo product.
 #[derive(Debug)]
@@ -39,11 +39,11 @@ pub struct Product {
 
 impl Product {
     pub fn new() -> Self {
-        // let t0 = timestamp: chrono::DateTime::parse_from_rfc3339("0000-01-01T00:00:00-00:00").unwrap();
+        let zero_time = DateTime::parse_from_rfc3339(ZERO_TIME).unwrap();
         Product {
             code: String::new(),
             description: String::new(),
-            timestamp: DateTime::parse_from_rfc3339(ZERO_TIME).unwrap(),
+            timestamp: zero_time.clone(),
             department: String::new(),
             category: String::new(),
             sub_category: String::new(),
@@ -66,10 +66,10 @@ impl Product {
             origin: String::new(),
             stock_origin: String::new(),
             stock_qtd: 0,
-            created_at: DateTime::parse_from_rfc3339(ZERO_TIME).unwrap(),
-            changed_at: DateTime::parse_from_rfc3339(ZERO_TIME).unwrap(),
-            removed_at: DateTime::parse_from_rfc3339(ZERO_TIME).unwrap(),
-            checked_at: DateTime::parse_from_rfc3339(ZERO_TIME).unwrap(),
+            created_at: zero_time.clone(),
+            changed_at: zero_time.clone(),
+            removed_at: zero_time.clone(),
+            checked_at: zero_time.clone(),
         }
     }
 }
@@ -82,12 +82,14 @@ impl fmt::Display for Product {
             \n\turl_image: {}\n\tpart_number: {}\n\tean: {}\n\tncm: {}\
             \n\tprice_sale: {}\n\tprice_without_st: {}\n\ticms_st_taxation: {}\n\twarranty_month: {}\
             \n\tlength_mm: {}\n\twidth_mm: {}\n\theight_mm: {}\n\tweight_g: {}\
-            \n\tactive: {}\n\tavailability: {}\n\torigin: {}\n\tstock_origin: {}\n\tstock_qtd: {}",
+            \n\tactive: {}\n\tavailability: {}\n\torigin: {}\n\tstock_origin: {}\n\tstock_qtd: {}\
+            \n\tcreated_at: {}\n\tchanged_at: {}\n\tremoved_at: {}\n\tchecked_at: {}",
             self.code, self.description, self.timestamp, self.department, self.category, self.sub_category, self.maker, self.technical_description.len(), 
             self.url_image, self.part_number, self.ean, self.ncm,
             self.price_sale, self.price_without_st, self.icms_st_taxation, self.warranty_month,
             self.length_mm, self.width_mm, self.height_mm, self.weight_g,
-            self.active, self.availability, self.origin, self.stock_origin, self.stock_qtd 
+            self.active, self.availability, self.origin, self.stock_origin, self.stock_qtd,
+            self.created_at, self.changed_at, self.removed_at, self.checked_at,
         )
     }
 }
