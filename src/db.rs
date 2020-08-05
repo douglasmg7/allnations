@@ -1,6 +1,16 @@
 use super::*;
 use chrono::{Utc, DateTime, FixedOffset, SecondsFormat};
 
+// This is a simple macro named `say_hello`.
+#[allow(unused_macros)]
+macro_rules! say_hello {
+    // `()` indicates that the macro takes no argument.
+    () => {
+        // The macro will expand into the contents of this block.
+        println!("Hello!");
+    };
+}
+
 const PRODUCT_FIELDS: &str = " \
 code, description, timestamp, department, category, sub_category, maker, technical_description, url_image, part_number, ean, ncm, \
 price_sale, price_without_st, icms_st_taxation, warranty_month, length_mm, width_mm, height_mm, weight_g, active, availability, origin, \
@@ -11,10 +21,6 @@ pub struct Db {
 }
 
 impl Db {
-    pub fn print_fiels() {
-        println!("fields: {}", PRODUCT_FIELDS);
-    }
-
     pub fn new(db_filename: &str) -> Db {
         Db {
             conn: rusqlite::Connection::open(db_filename).unwrap(),
@@ -106,56 +112,26 @@ mod tests {
     use super::*;
 
     #[test]
-    #[ignore]
-    fn print_fields() {
-        println!("product fields: [{}]", PRODUCT_FIELDS);
+    fn print_fields(){
+        println!("[{}]", PRODUCT_FIELDS);
         // assert_eq!(vec!["safe, fast, productive."], search(query, contents));
     }
+
+    #[test]
+    pub fn test_macro(){
+        // say_hello!();
+        if cfg!(test) {
+            println!("Running in test");
+        } else {
+            println!("Running in productionk");
+        }
+    }
+
+    #[test]
+    pub fn insert_product(){
+        // Configuration.
+        let config = super::config::Config::new();
+        let db = db::Db::new(&config.db_filename);
+        db.insert_product(&product::Product::new());
+    }
 }
-
-// macro_rules! t1 {
-// () => {
-// "
-// code, description, timestamp, department, category, sub_category, maker, technical_description, url_image, part_number, ean, ncm,
-// price_sale, price_without_st, icms_st_taxation, warranty_month, length_mm, width_mm, height_mm, weight_g, active, availability, origin,
-// stock_origin, stock_qtd, created_at, changed_at
-// "
-// };
-// }
-
-// const SQL: &str = concat!("SELECT ", t1!(), "FROM product");
-
-// // pub static STMT_PRODUCT_SELECT_ALL: &str = format!("SELECT {} FROM product", PRODUCT_FIELDS);
-// pub const STMT_PRODUCT_SELECT_ALL: &str = concat!("a", "b");
-
-// pub fn print_test() {
-// println!("sql: {}", SQL);
-// }
-
-// pub fn get_all_products() -> Result<(), rusqlite::Error> {
-// let conn = rusqlite::Connection::open(DB_FILE.get().unwrap())?;
-
-// let mut stmt = conn.prepare("SELECT code, description FROM product")?;
-// let product_iter = stmt.query_map(rusqlite::params![], |row| {
-// let mut product = xml::Product::new();
-// product.code = row.get(0)?;
-// product.description = row.get(1)?;
-// Ok(product)
-// })?;
-
-// for product in product_iter {
-// println!("{}", product.unwrap());
-// }
-// Ok(())
-// }
-
-// let conn = rusqlite::Connection::open(DB_FILE.get().unwrap()).unwrap();
-// t mut stmt = conn.prepare("SELECT code, description FROM product").unwrap();
-// let product_iter = stmt.query_map(params![], |row| {
-// Ok(Product {
-// id: row.get(0)?,
-// name: row.get(1)?,
-// time_created: row.get(2)?,
-// data: row.get(3)?,
-// })
-// })?;

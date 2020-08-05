@@ -47,8 +47,8 @@ CREATE TABLE IF NOT EXISTS product (
     stock_qtd               INTEGER NOT NULL,
     created_at              DATE NOT NULL,
     changed_at              DATE NOT NULL,
-    removed_at              DATE DEFAULT "0001-01-01T03:00:00-03:00",
-    checked_at              DATE DEFAULT "0001-01-01T03:00:00-03:00"
+    checked_at              DATE DEFAULT "0001-01-01T03:00:00-03:00",
+    removed_at              DATE DEFAULT "0001-01-01T03:00:00-03:00"
 );
 CREATE UNIQUE INDEX IF NOT EXISTS idx_product_code ON product(code);
 
@@ -82,8 +82,8 @@ CREATE TABLE IF NOT EXISTS product_history (
     stock_qtd               INTEGER NOT NULL,
     created_at              DATE NOT NULL,
     changed_at              DATE NOT NULL,
-    removed_at              DATE DEFAULT "0001-01-01T03:00:00-03:00",
     checked_at              DATE DEFAULT "0001-01-01T03:00:00-03:00",
+    removed_at              DATE DEFAULT "0001-01-01T03:00:00-03:00",
     UNIQUE (code, changed_at)
 );
 CREATE UNIQUE INDEX IF NOT EXISTS idx_product_history_code_changed_at ON product_history(code, changed_at);

@@ -2,11 +2,18 @@ pub mod config;
 pub mod db;
 pub mod product;
 
+pub enum RunMode {
+    Prod(),
+    Dev(),
+    Test(),
+}
+
 // Run.
 pub fn run(config: config::Config) -> Result<(), Box<dyn std::error::Error>> {
+    // Log configuration.
     config.log();
 
-    let _production = config.production;
+    // Init db.
     let db = db::Db::new(&config.db_filename);
 
     // Import products from xml.
@@ -14,7 +21,7 @@ pub fn run(config: config::Config) -> Result<(), Box<dyn std::error::Error>> {
     let products = product::products_from_xml(stdin.lock());
 
     // Insert product.
-    // db.insert_product(&products[0]);
+    db.insert_product(&products[0]);
 
     // for p in products {
     // println!("{}", p);

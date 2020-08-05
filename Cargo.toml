@@ -8,3 +8,4 @@ edition = "2018"
 chrono = "0.4.13"
 xml-rs = "0.8.3"
 rusqlite = { version = "0.23.1", features = ["chrono"] }
+time = "0.2.16" # Used by examples.

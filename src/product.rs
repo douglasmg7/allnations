@@ -33,8 +33,8 @@ pub struct Product {
     pub stock_qtd: i32,
     pub created_at: DateTime<FixedOffset>,
     pub changed_at: DateTime<FixedOffset>,
-    pub removed_at: DateTime<FixedOffset>,
     pub checked_at: DateTime<FixedOffset>,
+    pub removed_at: DateTime<FixedOffset>,
 }
 
 impl Product {
@@ -68,8 +68,8 @@ impl Product {
             stock_qtd: 0,
             created_at: zero_time.clone(),
             changed_at: zero_time.clone(),
-            removed_at: zero_time.clone(),
             checked_at: zero_time.clone(),
+            removed_at: zero_time.clone(),
         }
     }
 }
