@@ -29,7 +29,7 @@ pub fn run(config: config::Config) -> Result<(), Box<dyn std::error::Error>> {
 
     println!("Products quanatity: {}", products.len());
 
-    db.get_all_products().unwrap();
+    db.select_all_products().unwrap();
 
     Ok(())
 }

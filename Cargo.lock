@@ -5,6 +5,7 @@ name = "allnations"
 version = "0.0.1"
 dependencies = [
  "chrono",
+ "lazy_static",
  "rusqlite",
  "time 0.2.16",
  "xml-rs",

@@ -1,11 +1,17 @@
-use chrono::{DateTime, FixedOffset};
+use chrono::{DateTime, FixedOffset, Utc, SecondsFormat};
+// #[macro_use]
+use lazy_static;
 use std::fmt;
 
-const ZERO_TIME: &str = "0001-01-01T03:00:00-03:00";
+// const ZERO_TIME: &str = "0001-01-01T03:00:00-03:00";
+lazy_static::lazy_static! {
+   pub static ref ZERO_TIME: DateTime<FixedOffset> = DateTime::parse_from_rfc3339("0001-01-01T03:00:00-03:00").unwrap();
+}
 
 // Aldo product.
 #[derive(Debug)]
 pub struct Product {
+    pub zunka_product_id: String,
     pub code: String,
     pub description: String,
     pub timestamp: DateTime<FixedOffset>,
@@ -39,11 +45,12 @@ pub struct Product {
 
 impl Product {
     pub fn new() -> Self {
-        let zero_time = DateTime::parse_from_rfc3339(ZERO_TIME).unwrap();
+        let now = Utc::now().with_timezone(&FixedOffset::west(3 * 3600));
         Product {
-            code: String::new(),
+            zunka_product_id: String::new(),
+            code: "1111".to_string(),
             description: String::new(),
-            timestamp: zero_time.clone(),
+            timestamp: ZERO_TIME.clone(),
             department: String::new(),
             category: String::new(),
             sub_category: String::new(),
@@ -66,10 +73,10 @@ impl Product {
             origin: String::new(),
             stock_origin: String::new(),
             stock_qtd: 0,
-            created_at: zero_time.clone(),
-            changed_at: zero_time.clone(),
-            checked_at: zero_time.clone(),
-            removed_at: zero_time.clone(),
+            created_at: now.clone(),
+            changed_at: now.clone(),
+            checked_at: ZERO_TIME.clone(),
+            removed_at: ZERO_TIME.clone(),
         }
     }
 }
@@ -91,6 +98,41 @@ impl fmt::Display for Product {
             self.active, self.availability, self.origin, self.stock_origin, self.stock_qtd,
             self.created_at, self.changed_at, self.removed_at, self.checked_at,
         )
+    }
+}
+
+impl PartialEq for Product {
+    fn eq(&self, other: &Self) -> bool {
+            self.zunka_product_id == other.zunka_product_id
+            && self.code == other.code
+            && self.description == other.description
+            && self.timestamp == other.timestamp
+            && self.department == other.department
+            && self.category == other.category
+            && self.sub_category == other.sub_category
+            && self.maker == other.maker
+            && self.technical_description == other.technical_description
+            && self.url_image == other.url_image
+            && self.part_number == other.part_number
+            && self.ean == other.ean
+            && self.ncm == other.ncm
+            && self.price_sale == other.price_sale
+            && self.price_without_st == other.price_without_st
+            && self.icms_st_taxation == other.icms_st_taxation
+            && self.warranty_month == other.warranty_month
+            && self.length_mm == other.length_mm
+            && self.width_mm == other.width_mm
+            && self.height_mm == other.height_mm
+            && self.weight_g == other.weight_g
+            && self.active == other.active
+            && self.availability == other.availability
+            && self.origin == other.origin
+            && self.stock_origin == other.stock_origin
+            && self.stock_qtd == other.stock_qtd
+            && self.created_at.to_rfc3339_opts(SecondsFormat::Secs, false) == other.created_at.to_rfc3339_opts(SecondsFormat::Secs, false)
+            && self.changed_at.to_rfc3339_opts(SecondsFormat::Secs, false) == other.changed_at.to_rfc3339_opts(SecondsFormat::Secs, false)
+            && self.checked_at.to_rfc3339_opts(SecondsFormat::Secs, false) == other.checked_at.to_rfc3339_opts(SecondsFormat::Secs, false)
+            && self.removed_at.to_rfc3339_opts(SecondsFormat::Secs, false) == other.removed_at.to_rfc3339_opts(SecondsFormat::Secs, false)
     }
 }
 
