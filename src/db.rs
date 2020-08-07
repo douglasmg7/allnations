@@ -11,6 +11,20 @@ macro_rules! say_hello {
     };
 }
 
+// #[allow(unused_macros)]
+// macro_rules! named_params {
+    // ( $( $x:expr ),* ) => {
+        // {
+            // $(
+                // println!("{}", $x);
+                // $x;
+            // )*
+        // }
+    // };
+// }
+
+// named_params!("asdadsfasdf");
+
 const PRODUCT_FIELDS: &str = " \
 zunka_product_id, code, description, timestamp, department, category, sub_category, maker, \
 technical_description, url_image, part_number, ean, ncm, price_sale, price_without_st, \
@@ -19,12 +33,47 @@ availability, origin, stock_origin, stock_qtd, created_at, changed_at, removed_a
 
 pub struct Db {
     conn: rusqlite::Connection,
+    sql_select_product_by_code: String,
+    sql_select_all_products: String,
+    sql_update_product_by_code: String,
 }
 
 impl Db {
     pub fn new(db_filename: &str) -> Db {
+        let product_fields  = "zunka_product_id, code, description, timestamp, department, category, sub_category, maker, \
+technical_description, url_image, part_number, ean, ncm, price_sale, price_without_st, \
+icms_st_taxation, warranty_month, length_mm, width_mm, height_mm, weight_g, active, \
+availability, origin, stock_origin, stock_qtd, created_at, changed_at, removed_at, checked_at"
+            .to_string()
+            .split(",")
+            .map(|x| format!("{}", x.trim()))
+            .collect::<Vec<_>>()
+            .join(", ");
+
+        // Select product by code.
+        let select_product_by_code = format!(r#"SELECT {} FROM product WHERE code = :code"#, product_fields);
+        // let select_product_by_code = format!(r#"SELECT {} FROM product WHERE code = "?""#, product_fields);
+        // println!("select_product_by_code: [{}]", select_product_by_code);
+
+        // Select all products.
+        let select_all_products = format!("SELECT {} FROM product", product_fields);
+        // println!("select_all_products: [{}]", select_all_products);
+
+        // Product fields formated to update.
+        let product_fields_formated_to_update = product_fields.split(",")
+            .map(|x| format!("{0} = :{0}", x.trim()))
+            .collect::<Vec<_>>()
+            .join(", ");
+
+        // Update product by code.
+        let update_product_by_code = format!(r#"UPDATE product SET {} WHERE code = :code"#, product_fields_formated_to_update);
+        // println!("update_product_by_code: [{}]", update_product_by_code);
+
         Db {
             conn: rusqlite::Connection::open(db_filename).unwrap(),
+            sql_select_product_by_code: select_product_by_code,
+            sql_select_all_products: select_all_products,
+            sql_update_product_by_code: update_product_by_code,
         }
     }
 
@@ -55,8 +104,42 @@ impl Db {
 
     // Update product by code.
     pub fn update_product_by_code(&self, product: &product::Product) {
-        let mut stmt = self.conn.prepare("UPDATE product SET technical_description = :technical_description WHERE code = :code").unwrap();
-        stmt.execute_named(rusqlite::named_params!{":code": product.code, ":technical_description": product.technical_description}).unwrap();
+        // let mut stmt = self.conn.prepare("UPDATE product SET technical_description = :technical_description WHERE code = :code").unwrap();
+        // stmt.execute_named(rusqlite::named_params!{":code": product.code, ":technical_description": product.technical_description}).unwrap();
+
+        let mut stmt = self.conn.prepare(&self.sql_update_product_by_code).unwrap();
+        stmt.execute_named(&[
+            (":zunka_product_id", &product.zunka_product_id), 
+            (":code", &product.code), 
+            (":description", &product.description), 
+            (":timestamp", &product.timestamp), 
+            (":department", &product.department), 
+            (":category", &product.category), 
+            (":sub_category", &product.sub_category), 
+            (":maker", &product.maker), 
+            (":technical_description", &product.technical_description),
+            (":url_image", &product.url_image), 
+            (":part_number", &product.part_number), 
+            (":ean", &product.ean), 
+            (":ncm", &product.ncm), 
+            (":price_sale", &product.price_sale), 
+            (":price_without_st", &product.price_without_st), 
+            (":icms_st_taxation", &product.icms_st_taxation), 
+            (":warranty_month", &product.warranty_month), 
+            (":length_mm", &product.length_mm), 
+            (":width_mm", &product.width_mm), 
+            (":height_mm", &product.height_mm), 
+            (":weight_g", &product.weight_g), 
+            (":active", &product.active), 
+            (":availability", &product.availability), 
+            (":origin", &product.origin), 
+            (":stock_origin", &product.stock_origin), 
+            (":stock_qtd", &product.stock_qtd), 
+            (":created_at", &product.created_at), 
+            (":changed_at", &product.changed_at), 
+            (":checked_at", &product.checked_at), 
+            (":removed_at", &product.removed_at), 
+        ]).unwrap();
     }
 
     // Get all products.
@@ -64,7 +147,7 @@ impl Db {
         // let mut stmt = conn.prepare("SELECT code, description FROM product")?;
         let mut stmt = self
             .conn
-            .prepare(&format!("SELECT {} FROM product", PRODUCT_FIELDS)).unwrap();
+            .prepare(&self.sql_select_all_products).unwrap();
 
         let product_iter = stmt.query_map(rusqlite::params![], |row| {
             // let timestamp: DateTime<Utc> = row.get(2)?;
@@ -118,14 +201,10 @@ impl Db {
         Some(products)
     }
 
-    // Get all products.
+    // Select product by code.
     pub fn select_product_by_code(&self, code: &str) -> Option<product::Product> {
-        // let mut stmt = conn.prepare("SELECT code, description FROM product")?;
-        let mut stmt = self
-            .conn
-            .prepare(&format!("SELECT {} FROM product WHERE code = \"{}\"", PRODUCT_FIELDS, code)).unwrap();
-        // println!("SELECT {} FROM product WHERE code = {}", PRODUCT_FIELDS, code);
-        let mut rows = stmt.query(rusqlite::NO_PARAMS).unwrap();
+        let mut stmt = self.conn.prepare(&self.sql_select_product_by_code).unwrap();
+        let mut rows = stmt.query_named(&[(":code", &code)]).unwrap();
 
         let row = rows.next().unwrap();
         match row {
@@ -174,20 +253,29 @@ mod tests {
     use super::*;
 
     #[test]
+    #[ignore]
     fn print_fields(){
-        println!("[{}]", PRODUCT_FIELDS);
-        // assert_eq!(vec!["safe, fast, productive."], search(query, contents));
+        // println!("[{}]", PRODUCT_FIELDS);
+        // let s = FA.clone();
+        // println!("[{}]", s);
+        let config = super::config::Config::new();
+        let _db = db::Db::new(&config.db_filename);
+        // println!("sql: [{}]", db.sql);
     }
 
-    #[test]
-    pub fn test_macro(){
-        // say_hello!();
-        if cfg!(test) {
-            println!("Running in test");
-        } else {
-            println!("Running in productionk");
-        }
-    }
+    // #[test]
+    // pub fn test_macro(){
+
+        // // let a = named_params!["aaa", "bbb"];
+        // // println!("macro: {:?}", a);
+
+        // // // say_hello!();
+        // // if cfg!(test) {
+            // // println!("Running in test");
+        // // } else {
+            // // println!("Running in productionk");
+        // // }
+    // }
 
     #[test]
     pub fn crud_product(){
