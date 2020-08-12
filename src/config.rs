@@ -1,4 +1,4 @@
-use log::{error, info};
+use log::info;
 
 pub struct Config {
     pub run_mode: super::RunMode,
@@ -16,22 +16,15 @@ impl Config {
             run_mode = super::RunMode::Test();
             db_filename.push_str("-test");
         } else {
-            let mut args = std::env::args();
-            // Prgram name.
-            args.next();
-            match args.next() {
-                Some(arg) => {
-                    if arg == "-p" {
-                        run_mode = super::RunMode::Prod();
-                    } else {
-                        run_mode = super::RunMode::Dev();
-                        db_filename.push_str("-dev");
-                    }
-                }
-                None => {
-                    run_mode = super::RunMode::Dev();
-                    db_filename.push_str("-dev");
-                }
+            if std::env::var("RUN_MODE")
+                .unwrap_or("".to_string())
+                .to_lowercase()
+                == "production"
+            {
+                run_mode = super::RunMode::Prod();
+            } else {
+                run_mode = super::RunMode::Dev();
+                db_filename.push_str("-dev");
             }
         };
 
@@ -47,7 +40,6 @@ impl Config {
     // Log configuration.
     pub fn log(&self) {
         // Print run mode and version.
-        error!("Just a test");
         info!(
             "Running in {} mode (version {})",
             match self.run_mode {
