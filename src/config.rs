@@ -1,3 +1,5 @@
+use log::{error, info};
+
 pub struct Config {
     pub run_mode: super::RunMode,
     pub db_filename: String,
@@ -45,7 +47,8 @@ impl Config {
     // Log configuration.
     pub fn log(&self) {
         // Print run mode and version.
-        println!(
+        error!("Just a test");
+        info!(
             "Running in {} mode (version {})",
             match self.run_mode {
                 super::RunMode::Prod() => "production",
@@ -54,6 +57,6 @@ impl Config {
             },
             std::env!("CARGO_PKG_VERSION")
         );
-        println!("Using db: {}", self.db_filename);
+        info!("Using db: {}", self.db_filename);
     }
 }

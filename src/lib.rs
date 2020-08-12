@@ -1,5 +1,9 @@
+use log::{debug, error};
+use std::panic;
+
 pub mod config;
 pub mod db;
+pub mod logger;
 pub mod product;
 
 pub enum RunMode {
@@ -10,6 +14,11 @@ pub enum RunMode {
 
 // Run.
 pub fn run(config: config::Config) -> Result<(), Box<dyn std::error::Error>> {
+    // Log panic as error.
+    panic::set_hook(Box::new(|info| {
+        error!("{}", info);
+    }));
+
     // Log configuration.
     config.log();
 
@@ -27,7 +36,7 @@ pub fn run(config: config::Config) -> Result<(), Box<dyn std::error::Error>> {
     // println!("{}", p);
     // }
 
-    println!("Products quanatity: {}", products.len());
+    debug!("Products quanatity: {}", products.len());
 
     db.select_all_products().unwrap();
 
