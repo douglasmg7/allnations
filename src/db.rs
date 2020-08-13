@@ -158,12 +158,27 @@ macro_rules! product_from_row {
     };
 }
 
+// Create category from a row.
+macro_rules! category_from_row {
+    ($row: ident) => {
+        category::Category {
+            name: $row.get(0).unwrap(),
+            text: $row.get(1).unwrap(),
+            products_qtd: $row.get(2).unwrap(),
+            selected: $row.get(3).unwrap(),
+        }
+    };
+}
+
 pub struct Db {
     conn: rusqlite::Connection,
+    // Product.
     sql_insert_product: String,
     sql_update_product_by_code: String,
     sql_select_product_by_code: String,
     sql_select_all_products: String,
+    // Category.
+    sql_select_all_categories: String,
 }
 
 impl Db {
@@ -201,17 +216,24 @@ impl Db {
 
         Db {
             conn: rusqlite::Connection::open(db_filename).unwrap(),
+            // Product.
             sql_insert_product: insert_product,
             sql_update_product_by_code: update_product_by_code,
             sql_select_product_by_code: select_product_by_code,
             sql_select_all_products: select_all_products,
+            // Category.
+            sql_select_all_categories: "SELECT name, text, products_qtd, selected {} FROM category"
+                .to_string(),
         }
     }
 
+    /******************************************************
+     * PRODUCT
+     *******************************************************/
     // Delete all products.
     pub fn delete_all_products(&self) {
         self.conn
-            .execute("DELETE FROM PRODUCT", rusqlite::NO_PARAMS)
+            .execute("DELETE FROM product", rusqlite::NO_PARAMS)
             .unwrap();
     }
 
@@ -254,6 +276,32 @@ impl Db {
             products.push(product.unwrap());
         }
         Some(products)
+    }
+
+    /******************************************************
+     * CAETORY
+     *******************************************************/
+    // Delete all categories.
+    pub fn delete_all_categories(&self) {
+        self.conn
+            .execute("DELETE FROM category", rusqlite::NO_PARAMS)
+            .unwrap();
+    }
+
+    // Get all categories.
+    pub fn select_all_categories(&self) -> Option<Vec<category::Category>> {
+        // let mut stmt = conn.prepare("SELECT code, description FROM product")?;
+        let mut stmt = self.conn.prepare(&self.sql_select_all_categories).unwrap();
+
+        let categories_iter = stmt
+            .query_map(rusqlite::params![], |row| Ok(category_from_row!(row)))
+            .unwrap();
+
+        let mut categories = Vec::new();
+        for category in categories_iter {
+            categories.push(category.unwrap());
+        }
+        Some(categories)
     }
 }
 

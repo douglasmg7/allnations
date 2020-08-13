@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS param (
 CREATE TABLE IF NOT EXISTS category (
 	name                    TEXT PRIMARY KEY,	-- Name without space.
 	text                    TEXT NOT NULL,
-	products_qty            INTEGER NOT NULL,
+	products_qtd            INTEGER NOT NULL,
 	selected                BOOLEAN NOT NULL
 );
 
