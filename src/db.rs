@@ -96,6 +96,20 @@ macro_rules! stmt_execute_named_product {
     };
 }
 
+// Create execute named category for rusqlite statement.
+macro_rules! stmt_execute_named_category {
+    ($stmt: ident, $category: ident) => {
+        $stmt
+            .execute_named(&[
+                (":name", &$category.name),
+                (":text", &$category.text),
+                (":products_qtd", &$category.products_qtd),
+                (":selected", &$category.selected),
+            ])
+            .unwrap();
+    };
+}
+
 // Create product from a row.
 macro_rules! product_from_row {
     // let timestamp: DateTime<Utc> = row.get(2)?;
@@ -171,13 +185,14 @@ macro_rules! category_from_row {
 }
 
 pub struct Db {
-    conn: rusqlite::Connection,
+    pub conn: rusqlite::Connection,
     // Product.
     sql_insert_product: String,
     sql_update_product_by_code: String,
     sql_select_product_by_code: String,
     sql_select_all_products: String,
     // Category.
+    sql_insert_category: String,
     sql_select_all_categories: String,
 }
 
@@ -221,9 +236,9 @@ impl Db {
             sql_update_product_by_code: update_product_by_code,
             sql_select_product_by_code: select_product_by_code,
             sql_select_all_products: select_all_products,
-            // Category.
-            sql_select_all_categories: "SELECT name, text, products_qtd, selected {} FROM category"
-                .to_string(),
+            // // Category.
+            sql_insert_category: "INSERT INTO category (name, text, products_qtd, selected) values (:name, :text, :products_qtd, :selected)".to_string(),
+            sql_select_all_categories: "SELECT name, text, products_qtd, selected FROM category".to_string(),
         }
     }
 
@@ -281,22 +296,25 @@ impl Db {
     /******************************************************
      * CAETORY
      *******************************************************/
-    // Delete all categories.
-    pub fn delete_all_categories(&self) {
-        self.conn
-            .execute("DELETE FROM category", rusqlite::NO_PARAMS)
-            .unwrap();
+    // // Delete all categories.
+    // pub fn delete_all_categories(&self) {
+    // self.conn
+    // .execute("DELETE FROM category", rusqlite::NO_PARAMS)
+    // .unwrap();
+    // }
+
+    // Insert.
+    pub fn insert_category(&self, category: &category::Category) {
+        let mut stmt = self.conn.prepare(&self.sql_insert_category).unwrap();
+        stmt_execute_named_category!(stmt, category);
     }
 
-    // Get all categories.
+    // Get all.
     pub fn select_all_categories(&self) -> Option<Vec<category::Category>> {
-        // let mut stmt = conn.prepare("SELECT code, description FROM product")?;
         let mut stmt = self.conn.prepare(&self.sql_select_all_categories).unwrap();
-
         let categories_iter = stmt
             .query_map(rusqlite::params![], |row| Ok(category_from_row!(row)))
             .unwrap();
-
         let mut categories = Vec::new();
         for category in categories_iter {
             categories.push(category.unwrap());
@@ -316,35 +334,65 @@ mod tests {
     }
 
     #[test]
-    pub fn crud_product() {
+    pub fn crud() {
         // Configuration.
         let config = super::config::Config::new();
         let db = db::Db::new(&config.db_filename);
 
-        // Delete all products.
+        /***********************************************
+         * PRODUCT
+         ***********************************************/
+        // Delete.
         db.delete_all_products();
 
-        // Insert product.
+        // Insert.
         let now = Utc::now().with_timezone(&FixedOffset::west(3 * 3600));
         // let now = Utc::now().with_timezone(&FixedOffset::west(3 * 3600)).to_rfc3339_opts(SecondsFormat::Secs, false);
         let mut product_insert = product_example!(now);
         db.insert_product(&product_insert);
         db.insert_product(&product::Product::new());
 
-        // Select product by code.
+        // Select by code.
         let product_select = db.select_product_by_code(&product_insert.code).unwrap();
         assert_eq!(product_insert, product_select);
 
-        // Select all products.
+        // Select all.
         let products = db.select_all_products().unwrap();
         assert!(products.len() > 1);
 
-        // Update product.
+        // Update.
         product_insert.technical_description = "asdf".to_string();
         db.update_product_by_code(&product_insert);
-
-        // Select product by code.
         let product_select = db.select_product_by_code(&product_insert.code).unwrap();
         assert_eq!(product_insert, product_select);
+
+        /***********************************************
+         * CATEGORY
+         ***********************************************/
+        // Delete.
+        // db.delete_all_categories();
+        category::delete_all(&db.conn);
+
+        // Insert.
+        let category_to_insert = category::Category::new("Laptops", 2, true);
+        db.insert_category(&category_to_insert);
+        let category_to_insert = category::Category::new("Computadores", 4, true);
+        db.insert_category(&category_to_insert);
+
+        // // Select by code.
+        // let product_select = db.select_product_by_code(&product_insert.code).unwrap();
+        // assert_eq!(product_insert, product_select);
+
+        // Select all.
+        let products = db.select_all_categories().unwrap();
+        assert!(products.len() > 1);
+
+        // // Update.
+        // product_insert.technical_description = "asdf".to_string();
+        // db.update_product_by_code(&product_insert);
+
+        // // Select product by code.
+        // let product_select = db.select_product_by_code(&product_insert.code).unwrap();
+        // assert_eq!(product_insert, product_select);
     }
 }

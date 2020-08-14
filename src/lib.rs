@@ -45,6 +45,8 @@ pub fn run(config: config::Config) -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
+#[allow(unused_variables)]
+#[allow(unused_mut)]
 pub fn process_products(products: Vec<product::Product>) {
     let mut min_price = std::i32::MAX;
     let mut max_price = std::i32::MIN;
