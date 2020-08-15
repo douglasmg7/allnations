@@ -335,57 +335,52 @@ mod tests {
 
     #[test]
     pub fn crud() {
-        // Configuration.
-        let config = super::config::Config::new();
-        let db = db::Db::new(&config.db_filename);
+        let db = db::Db::new(&super::config::Config::new().db_filename);
 
         /***********************************************
          * PRODUCT
          ***********************************************/
-        // Delete.
-        db.delete_all_products();
+        // // Remove all.
+        // product::remove_all(&db.conn);
+        // // db.delete_all_products();
 
-        // Insert.
-        let now = Utc::now().with_timezone(&FixedOffset::west(3 * 3600));
-        // let now = Utc::now().with_timezone(&FixedOffset::west(3 * 3600)).to_rfc3339_opts(SecondsFormat::Secs, false);
-        let mut product_insert = product_example!(now);
-        db.insert_product(&product_insert);
-        db.insert_product(&product::Product::new());
+        // // Insert.
+        // let now = Utc::now().with_timezone(&FixedOffset::west(3 * 3600));
+        // // let now = Utc::now().with_timezone(&FixedOffset::west(3 * 3600)).to_rfc3339_opts(SecondsFormat::Secs, false);
+        // let mut product_insert = product_example!(now);
+        // db.insert_product(&product_insert);
+        // db.insert_product(&product::Product::new());
 
-        // Select by code.
-        let product_select = db.select_product_by_code(&product_insert.code).unwrap();
-        assert_eq!(product_insert, product_select);
+        // // Select by code.
+        // let product_select = db.select_product_by_code(&product_insert.code).unwrap();
+        // assert_eq!(product_insert, product_select);
 
-        // Select all.
-        let products = db.select_all_products().unwrap();
-        assert!(products.len() > 1);
+        // // Select all.
+        // let products = db.select_all_products().unwrap();
+        // assert!(products.len() > 1);
 
-        // Update.
-        product_insert.technical_description = "asdf".to_string();
-        db.update_product_by_code(&product_insert);
-        let product_select = db.select_product_by_code(&product_insert.code).unwrap();
-        assert_eq!(product_insert, product_select);
+        // // Update.
+        // product_insert.technical_description = "asdf".to_string();
+        // db.update_product_by_code(&product_insert);
+        // let product_select = db.select_product_by_code(&product_insert.code).unwrap();
+        // assert_eq!(product_insert, product_select);
 
         /***********************************************
          * CATEGORY
          ***********************************************/
         // Delete.
-        // db.delete_all_categories();
-        category::delete_all(&db.conn);
+        category::remove_all(&db.conn);
 
         // Insert.
-        let category_to_insert = category::Category::new("Laptops", 2, true);
-        db.insert_category(&category_to_insert);
-        let category_to_insert = category::Category::new("Computadores", 4, true);
-        db.insert_category(&category_to_insert);
+        category::Category::new("Laptops", 2, true).save(&db.conn);
+        category::Category::new("Computadores", 4, true).save(&db.conn);
 
         // // Select by code.
         // let product_select = db.select_product_by_code(&product_insert.code).unwrap();
         // assert_eq!(product_insert, product_select);
 
         // Select all.
-        let products = db.select_all_categories().unwrap();
-        assert!(products.len() > 1);
+        assert!(category::get_all(&db.conn).unwrap().len() > 1);
 
         // // Update.
         // product_insert.technical_description = "asdf".to_string();
