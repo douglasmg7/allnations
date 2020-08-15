@@ -4,8 +4,8 @@ use std::panic;
 
 pub mod category;
 pub mod config;
-pub mod db;
 pub mod logger;
+pub mod macros;
 pub mod product;
 
 pub enum RunMode {
@@ -24,24 +24,17 @@ pub fn run(config: config::Config) -> Result<(), Box<dyn std::error::Error>> {
     // Log configuration.
     config.log();
 
-    // Init db.
-    let db = db::Db::new(&config.db_filename);
+    // Init db connection.
+    let conn = rusqlite::Connection::open(&config.db_filename).unwrap();
 
     // Import products from xml.
     let stdin = std::io::stdin();
     let products = product::products_from_xml(stdin.lock());
 
     // Insert product.
-    db.insert_product(&products[0]);
-
-    // for p in products {
-    // println!("{}", p);
-    // }
-
+    products[0].save(&conn);
     debug!("Products quanatity: {}", products.len());
-
-    db.select_all_products().unwrap();
-
+    product::Product::get_all(&conn).unwrap();
     Ok(())
 }
 
