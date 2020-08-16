@@ -1,8 +1,14 @@
 use log::info;
 
+pub struct Filter {
+    pub min_price: i32, // Price x 100.
+    pub max_price: i32, // Price x 100.
+}
+
 pub struct Config {
     pub run_mode: super::RunMode,
     pub db_filename: String,
+    pub filter: Filter,
 }
 
 impl Config {
@@ -34,6 +40,10 @@ impl Config {
         Config {
             run_mode: run_mode,
             db_filename: db_filename,
+            filter: Filter {
+                min_price: 1000 * 100,
+                max_price: 1_000_000 * 100,
+            },
         }
     }
 

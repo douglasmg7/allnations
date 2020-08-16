@@ -145,7 +145,7 @@ impl Product {
     }
 
     // Get all from db.
-    pub fn get_all(conn: &rusqlite::Connection) -> Option<Vec<Product>> {
+    pub fn get_all(conn: &rusqlite::Connection) -> Vec<Product> {
         let mut stmt = conn
             .prepare(&format!("SELECT {} FROM product", PRODUCT_FIELDS))
             .unwrap();
@@ -156,7 +156,123 @@ impl Product {
         for product in iter {
             products.push(product.unwrap());
         }
-        Some(products)
+        products
+    }
+
+    // Read xml from stdin.
+    pub fn from_xml<T: std::io::Read>(xml: T) -> Vec<Product> {
+        // let stdin = io::stdin();
+        // let handle = stdin.lock();
+        let parser = xml::reader::EventReader::new(xml);
+        // let mut depth = 0;
+        let mut tag = String::new();
+        let mut inside_product = false;
+        let mut products: Vec<Product> = Vec::new();
+        let mut product = Product::new();
+        for e in parser {
+            match e {
+                Ok(xml::reader::XmlEvent::StartElement { name, .. }) => {
+                    if name.local_name.eq("Produtos") {
+                        if inside_product {
+                            panic!("Already inside product!");
+                        }
+                        inside_product = true;
+                    }
+                    if inside_product {
+                        tag = name.local_name;
+                    }
+                }
+                Ok(xml::reader::XmlEvent::Characters(text)) => match tag.as_str() {
+                    "TIMESTAMP" => {
+                        product.timestamp = chrono::DateTime::parse_from_rfc3339(&text)
+                            .expect(&format!("Invalid TIMESTAMP: {}", text));
+                    }
+                    "DEPARTAMENTO" => product.department = text.clone(),
+                    "CATEGORIA" => product.category = text.clone(),
+                    "SUBCATEGORIA" => product.sub_category = text.clone(),
+                    "FABRICANTE" => product.maker = text.clone(),
+                    "CODIGO" => product.code = text.clone(),
+                    "DESCRICAO" => product.description = text.clone(),
+                    "DESCRTEC" => product.technical_description = text.clone(),
+                    "PARTNUMBER" => product.part_number = text.clone(),
+                    "EAN" => product.ean = text.clone(),
+                    "GARANTIA" => {
+                        product.warranty_month = text
+                            .parse::<i32>()
+                            .expect(&format!("Invalid GARANTIA: {}", text));
+                    }
+                    "PESOKG" => {
+                        product.weight_g = (1000.0
+                            * text
+                            .parse::<f32>()
+                            .expect(&format!("Invalid PESOKG: {}", text)))
+                            as i32;
+                    }
+                    "PRECOREVENDA" => {
+                        product.price_sale = (100.0
+                            * text
+                            .parse::<f32>()
+                            .expect(&format!("Invalid PRECOREVENDA: {}", text)))
+                            as i32;
+                    }
+                    "PRECOSEMST" => {
+                        product.price_without_st = (100.0
+                            * text
+                            .parse::<f32>()
+                            .expect(&format!("Invalid PRECOSEMST: {}", text)))
+                            as i32;
+                    }
+                    "DISPONIVEL" => product.availability = text == "1",
+                    "URLFOTOPRODUTO" => product.url_image = text.clone(),
+                    "ESTOQUE" => product.stock_origin = text.clone(),
+                    "NCM" => product.ncm = text.clone(),
+                    "LARGURA" => {
+                        product.width_mm = (1000.0
+                            * text
+                            .parse::<f32>()
+                            .expect(&format!("Invalid LARGURA: {}", text)))
+                            as i32;
+                    }
+                    "ALTURA" => {
+                        product.height_mm = (1000.0
+                            * text
+                            .parse::<f32>()
+                            .expect(&format!("Invalid ALTURA: {}", text)))
+                            as i32;
+                    }
+                    "PROFUNDIDADE" => {
+                        product.length_mm = (1000.0
+                            * text
+                            .parse::<f32>()
+                            .expect(&format!("Invalid PROFUNDIDADE: {}", text)))
+                            as i32;
+                    }
+                    "ATIVO" => product.active = text == "1",
+                    "SUBSTTRIBUTARIA" => product.icms_st_taxation = text == "1",
+                    "ORIGEMPRODUTO" => product.origin = text.clone(),
+                    "ESTOQUEDISPONIVEL" => {
+                        product.stock_qtd = (text
+                            .parse::<f32>()
+                            .expect(&format!("Invalid ESTOQUEDISPONIVEL: {}", text)))
+                            as i32
+                    }
+                    _ => {}
+                },
+                Ok(xml::reader::XmlEvent::EndElement { name }) => {
+                    if name.local_name.eq("Produtos") {
+                        products.push(product);
+                        product = Product::new();
+                        inside_product = false;
+                    }
+                }
+                Err(e) => {
+                    println!("Error: {}", e);
+                    break;
+                }
+                _ => {}
+            }
+        }
+        products
     }
 }
 
@@ -215,121 +331,121 @@ impl PartialEq for Product {
     }
 }
 
-// Read xml from stdin.
-pub fn products_from_xml<T: std::io::Read>(xml: T) -> Vec<Product> {
-    // let stdin = io::stdin();
-    // let handle = stdin.lock();
-    let parser = xml::reader::EventReader::new(xml);
-    // let mut depth = 0;
-    let mut tag = String::new();
-    let mut inside_product = false;
-    let mut products: Vec<Product> = Vec::new();
-    let mut product = Product::new();
-    for e in parser {
-        match e {
-            Ok(xml::reader::XmlEvent::StartElement { name, .. }) => {
-                if name.local_name.eq("Produtos") {
-                    if inside_product {
-                        panic!("Already inside product!");
-                    }
-                    inside_product = true;
-                }
-                if inside_product {
-                    tag = name.local_name;
-                }
-            }
-            Ok(xml::reader::XmlEvent::Characters(text)) => match tag.as_str() {
-                "TIMESTAMP" => {
-                    product.timestamp = chrono::DateTime::parse_from_rfc3339(&text)
-                        .expect(&format!("Invalid TIMESTAMP: {}", text));
-                }
-                "DEPARTAMENTO" => product.department = text.clone(),
-                "CATEGORIA" => product.category = text.clone(),
-                "SUBCATEGORIA" => product.sub_category = text.clone(),
-                "FABRICANTE" => product.maker = text.clone(),
-                "CODIGO" => product.code = text.clone(),
-                "DESCRICAO" => product.description = text.clone(),
-                "DESCRTEC" => product.technical_description = text.clone(),
-                "PARTNUMBER" => product.part_number = text.clone(),
-                "EAN" => product.ean = text.clone(),
-                "GARANTIA" => {
-                    product.warranty_month = text
-                        .parse::<i32>()
-                        .expect(&format!("Invalid GARANTIA: {}", text));
-                }
-                "PESOKG" => {
-                    product.weight_g = (1000.0
-                        * text
-                            .parse::<f32>()
-                            .expect(&format!("Invalid PESOKG: {}", text)))
-                        as i32;
-                }
-                "PRECOREVENDA" => {
-                    product.price_sale = (100.0
-                        * text
-                            .parse::<f32>()
-                            .expect(&format!("Invalid PRECOREVENDA: {}", text)))
-                        as i32;
-                }
-                "PRECOSEMST" => {
-                    product.price_without_st = (100.0
-                        * text
-                            .parse::<f32>()
-                            .expect(&format!("Invalid PRECOSEMST: {}", text)))
-                        as i32;
-                }
-                "DISPONIVEL" => product.availability = text == "1",
-                "URLFOTOPRODUTO" => product.url_image = text.clone(),
-                "ESTOQUE" => product.stock_origin = text.clone(),
-                "NCM" => product.ncm = text.clone(),
-                "LARGURA" => {
-                    product.width_mm = (1000.0
-                        * text
-                            .parse::<f32>()
-                            .expect(&format!("Invalid LARGURA: {}", text)))
-                        as i32;
-                }
-                "ALTURA" => {
-                    product.height_mm = (1000.0
-                        * text
-                            .parse::<f32>()
-                            .expect(&format!("Invalid ALTURA: {}", text)))
-                        as i32;
-                }
-                "PROFUNDIDADE" => {
-                    product.length_mm = (1000.0
-                        * text
-                            .parse::<f32>()
-                            .expect(&format!("Invalid PROFUNDIDADE: {}", text)))
-                        as i32;
-                }
-                "ATIVO" => product.active = text == "1",
-                "SUBSTTRIBUTARIA" => product.icms_st_taxation = text == "1",
-                "ORIGEMPRODUTO" => product.origin = text.clone(),
-                "ESTOQUEDISPONIVEL" => {
-                    product.stock_qtd = (text
-                        .parse::<f32>()
-                        .expect(&format!("Invalid ESTOQUEDISPONIVEL: {}", text)))
-                        as i32
-                }
-                _ => {}
-            },
-            Ok(xml::reader::XmlEvent::EndElement { name }) => {
-                if name.local_name.eq("Produtos") {
-                    products.push(product);
-                    product = Product::new();
-                    inside_product = false;
-                }
-            }
-            Err(e) => {
-                println!("Error: {}", e);
-                break;
-            }
-            _ => {}
-        }
-    }
-    products
-}
+// // Read xml from stdin.
+// pub fn products_from_xml<T: std::io::Read>(xml: T) -> Vec<Product> {
+    // // let stdin = io::stdin();
+    // // let handle = stdin.lock();
+    // let parser = xml::reader::EventReader::new(xml);
+    // // let mut depth = 0;
+    // let mut tag = String::new();
+    // let mut inside_product = false;
+    // let mut products: Vec<Product> = Vec::new();
+    // let mut product = Product::new();
+    // for e in parser {
+        // match e {
+            // Ok(xml::reader::XmlEvent::StartElement { name, .. }) => {
+                // if name.local_name.eq("Produtos") {
+                    // if inside_product {
+                        // panic!("Already inside product!");
+                    // }
+                    // inside_product = true;
+                // }
+                // if inside_product {
+                    // tag = name.local_name;
+                // }
+            // }
+            // Ok(xml::reader::XmlEvent::Characters(text)) => match tag.as_str() {
+                // "TIMESTAMP" => {
+                    // product.timestamp = chrono::DateTime::parse_from_rfc3339(&text)
+                        // .expect(&format!("Invalid TIMESTAMP: {}", text));
+                // }
+                // "DEPARTAMENTO" => product.department = text.clone(),
+                // "CATEGORIA" => product.category = text.clone(),
+                // "SUBCATEGORIA" => product.sub_category = text.clone(),
+                // "FABRICANTE" => product.maker = text.clone(),
+                // "CODIGO" => product.code = text.clone(),
+                // "DESCRICAO" => product.description = text.clone(),
+                // "DESCRTEC" => product.technical_description = text.clone(),
+                // "PARTNUMBER" => product.part_number = text.clone(),
+                // "EAN" => product.ean = text.clone(),
+                // "GARANTIA" => {
+                    // product.warranty_month = text
+                        // .parse::<i32>()
+                        // .expect(&format!("Invalid GARANTIA: {}", text));
+                // }
+                // "PESOKG" => {
+                    // product.weight_g = (1000.0
+                        // * text
+                            // .parse::<f32>()
+                            // .expect(&format!("Invalid PESOKG: {}", text)))
+                        // as i32;
+                // }
+                // "PRECOREVENDA" => {
+                    // product.price_sale = (100.0
+                        // * text
+                            // .parse::<f32>()
+                            // .expect(&format!("Invalid PRECOREVENDA: {}", text)))
+                        // as i32;
+                // }
+                // "PRECOSEMST" => {
+                    // product.price_without_st = (100.0
+                        // * text
+                            // .parse::<f32>()
+                            // .expect(&format!("Invalid PRECOSEMST: {}", text)))
+                        // as i32;
+                // }
+                // "DISPONIVEL" => product.availability = text == "1",
+                // "URLFOTOPRODUTO" => product.url_image = text.clone(),
+                // "ESTOQUE" => product.stock_origin = text.clone(),
+                // "NCM" => product.ncm = text.clone(),
+                // "LARGURA" => {
+                    // product.width_mm = (1000.0
+                        // * text
+                            // .parse::<f32>()
+                            // .expect(&format!("Invalid LARGURA: {}", text)))
+                        // as i32;
+                // }
+                // "ALTURA" => {
+                    // product.height_mm = (1000.0
+                        // * text
+                            // .parse::<f32>()
+                            // .expect(&format!("Invalid ALTURA: {}", text)))
+                        // as i32;
+                // }
+                // "PROFUNDIDADE" => {
+                    // product.length_mm = (1000.0
+                        // * text
+                            // .parse::<f32>()
+                            // .expect(&format!("Invalid PROFUNDIDADE: {}", text)))
+                        // as i32;
+                // }
+                // "ATIVO" => product.active = text == "1",
+                // "SUBSTTRIBUTARIA" => product.icms_st_taxation = text == "1",
+                // "ORIGEMPRODUTO" => product.origin = text.clone(),
+                // "ESTOQUEDISPONIVEL" => {
+                    // product.stock_qtd = (text
+                        // .parse::<f32>()
+                        // .expect(&format!("Invalid ESTOQUEDISPONIVEL: {}", text)))
+                        // as i32
+                // }
+                // _ => {}
+            // },
+            // Ok(xml::reader::XmlEvent::EndElement { name }) => {
+                // if name.local_name.eq("Produtos") {
+                    // products.push(product);
+                    // product = Product::new();
+                    // inside_product = false;
+                // }
+            // }
+            // Err(e) => {
+                // println!("Error: {}", e);
+                // break;
+            // }
+            // _ => {}
+        // }
+    // }
+    // products
+// }
 
 #[allow(unused_imports)]
 mod test {

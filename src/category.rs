@@ -48,6 +48,25 @@ impl Category {
         }
         Some(categories)
     }
+
+    // Get all selected.
+    pub fn get_all_selected(conn: &rusqlite::Connection) -> Vec<Category> {
+        let mut stmt = conn
+            .prepare(
+                "SELECT name, text, products_qtd, selected FROM category WHERE selected = true",
+            )
+            .unwrap();
+        let categories_iter = stmt
+            .query_map(rusqlite::params![], |row| {
+                Ok(super::category_from_row!(row))
+            })
+            .unwrap();
+        let mut categories = Vec::new();
+        for category in categories_iter {
+            categories.push(category.unwrap());
+        }
+        categories
+    }
 }
 
 impl fmt::Display for Category {
