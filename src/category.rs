@@ -1,6 +1,6 @@
 use std::fmt;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Category {
     pub name: String, // Text without space.
     pub text: String,
@@ -21,8 +21,16 @@ impl Category {
 
     // Insert on db.
     pub fn save(&self, conn: &rusqlite::Connection) {
-        let sql_insert_category = "INSERT INTO category (name, text, products_qtd, selected) values (:name, :text, :products_qtd, :selected)";
-        let mut stmt = conn.prepare(sql_insert_category).unwrap();
+        let sql = "INSERT INTO category (name, text, products_qtd, selected) VALUES (:name, :text, :products_qtd, :selected)";
+        let mut stmt = conn.prepare(sql).unwrap();
+        super::stmt_execute_named_category!(stmt, self);
+    }
+
+    // Insert or update on db.
+    pub fn save_or_update_only_products_qtd(&self, conn: &rusqlite::Connection) {
+        let sql = "INSERT INTO category (name, text, products_qtd, selected) VALUES (:name, :text, :products_qtd, :selected)\
+                   ON CONFLICT(name) DO UPDATE SET products_qtd=excluded.products_qtd";
+        let mut stmt = conn.prepare(sql).unwrap();
         super::stmt_execute_named_category!(stmt, self);
     }
 
@@ -30,6 +38,20 @@ impl Category {
     pub fn remove_all(conn: &rusqlite::Connection) {
         conn.execute("DELETE FROM category", rusqlite::NO_PARAMS)
             .unwrap();
+    }
+
+    // Get one from db.
+    pub fn get_one(conn: &rusqlite::Connection, name: &str) -> Option<Category> {
+        let mut stmt = conn
+            .prepare("SELECT name, text, products_qtd, selected FROM category WHERE name = :name")
+            .unwrap();
+        let mut rows = stmt.query_named(&[(":name", &name)]).unwrap();
+
+        let row = rows.next().unwrap();
+        match row {
+            None => None,
+            Some(row) => Some(super::category_from_row!(row)),
+        }
     }
 
     // Get all.
@@ -105,5 +127,21 @@ mod test {
         // Get all.
         let categories = Category::get_all(&conn).unwrap();
         assert!(categories.len() > 1);
+
+        // Insert or update.
+        // Must insert.
+        let mut category = Category::new("Impressoras", 5, true);
+        category.save_or_update_only_products_qtd(&conn);
+        let saved_category = Category::get_one(&conn, &category.name).unwrap();
+        assert_eq!(saved_category, category);
+        // Must update.
+        category.products_qtd = 10;
+        category.selected = false;
+        category.save_or_update_only_products_qtd(&conn);
+        let saved_category = Category::get_one(&conn, &category.name).unwrap();
+        assert_eq!(saved_category.text, category.text);
+        assert_eq!(saved_category.products_qtd, category.products_qtd);
+        // Must not update selected.
+        assert_eq!(saved_category.selected, true);
     }
 }
