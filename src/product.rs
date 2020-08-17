@@ -58,19 +58,19 @@ pub struct Product {
     pub part_number: String,
     pub ean: String,
     pub ncm: String,
-    pub price_sale: i32,
-    pub price_without_st: i32,
+    pub price_sale: u32,
+    pub price_without_st: u32,
     pub icms_st_taxation: bool,
-    pub warranty_month: i32,
-    pub length_mm: i32,
-    pub width_mm: i32,
-    pub height_mm: i32,
-    pub weight_g: i32,
+    pub warranty_month: u32,
+    pub length_mm: u32,
+    pub width_mm: u32,
+    pub height_mm: u32,
+    pub weight_g: u32,
     pub active: bool,
     pub availability: bool,
     pub origin: String,     // Nacional, importado, entre outros...
     pub stock_origin: String,   // RJ, SC or ES.
-    pub stock_qtd: i32,
+    pub stock_qtd: u32,
     pub created_at: DateTime<FixedOffset>,
     pub changed_at: DateTime<FixedOffset>,
     pub checked_at: DateTime<FixedOffset>,
@@ -198,7 +198,7 @@ impl Product {
                     "EAN" => product.ean = text.clone(),
                     "GARANTIA" => {
                         product.warranty_month = text
-                            .parse::<i32>()
+                            .parse::<u32>()
                             .expect(&format!("Invalid GARANTIA: {}", text));
                     }
                     "PESOKG" => {
@@ -206,21 +206,21 @@ impl Product {
                             * text
                             .parse::<f32>()
                             .expect(&format!("Invalid PESOKG: {}", text)))
-                            as i32;
+                            as u32;
                     }
                     "PRECOREVENDA" => {
                         product.price_sale = (100.0
                             * text
                             .parse::<f32>()
                             .expect(&format!("Invalid PRECOREVENDA: {}", text)))
-                            as i32;
+                            as u32;
                     }
                     "PRECOSEMST" => {
                         product.price_without_st = (100.0
                             * text
                             .parse::<f32>()
                             .expect(&format!("Invalid PRECOSEMST: {}", text)))
-                            as i32;
+                            as u32;
                     }
                     "DISPONIVEL" => product.availability = text == "1",
                     "URLFOTOPRODUTO" => product.url_image = text.clone(),
@@ -231,21 +231,21 @@ impl Product {
                             * text
                             .parse::<f32>()
                             .expect(&format!("Invalid LARGURA: {}", text)))
-                            as i32;
+                            as u32;
                     }
                     "ALTURA" => {
                         product.height_mm = (1000.0
                             * text
                             .parse::<f32>()
                             .expect(&format!("Invalid ALTURA: {}", text)))
-                            as i32;
+                            as u32;
                     }
                     "PROFUNDIDADE" => {
                         product.length_mm = (1000.0
                             * text
                             .parse::<f32>()
                             .expect(&format!("Invalid PROFUNDIDADE: {}", text)))
-                            as i32;
+                            as u32;
                     }
                     "ATIVO" => product.active = text == "1",
                     "SUBSTTRIBUTARIA" => product.icms_st_taxation = text == "1",
@@ -254,7 +254,7 @@ impl Product {
                         product.stock_qtd = (text
                             .parse::<f32>()
                             .expect(&format!("Invalid ESTOQUEDISPONIVEL: {}", text)))
-                            as i32
+                            as u32
                     }
                     _ => {}
                 },

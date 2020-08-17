@@ -1,8 +1,8 @@
 use log::info;
 
 pub struct Filter {
-    pub min_price: i32, // Price x 100.
-    pub max_price: i32, // Price x 100.
+    pub min_price: u32, // Price x 100.
+    pub max_price: u32, // Price x 100.
 }
 
 pub struct Config {

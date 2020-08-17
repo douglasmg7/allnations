@@ -1,6 +1,6 @@
 use category::Category;
 use chrono::{FixedOffset, Utc};
-use log::{debug, error};
+use log::error;
 use product::Product;
 use std::collections::{HashMap, HashSet};
 use std::panic;
@@ -32,7 +32,7 @@ pub fn run(config: config::Config) -> Result<(), Box<dyn std::error::Error>> {
 
     // Import products from xml.
     let stdin = std::io::stdin();
-    let products = Product::from_xml(stdin.lock());
+    let mut products = Product::from_xml(stdin.lock());
 
     // Get all selected categories.
     let selected_categories_array = Category::get_all_selected(&conn);
@@ -41,10 +41,10 @@ pub fn run(config: config::Config) -> Result<(), Box<dyn std::error::Error>> {
         selected_categories.insert(&sel_category.name, sel_category);
     }
 
-    // Insert product.
-    products[0].save(&conn);
-    debug!("Products quanatity: {}", products.len());
-    Product::get_all(&conn);
+    process_products(&mut products, &selected_categories, &config.filter, &conn);
+
+    // // Insert product.
+    // debug!("Products quanatity: {}", products.len());
     Ok(())
 }
 
@@ -52,12 +52,12 @@ pub fn run(config: config::Config) -> Result<(), Box<dyn std::error::Error>> {
 #[allow(unused_mut)]
 pub fn process_products(
     products: &mut Vec<Product>,
-    selected_categories: &HashMap<String, Category>,
+    selected_categories: &HashMap<&String, &Category>,
     filter: &config::Filter,
     conn: &rusqlite::Connection,
 ) {
-    let mut min_price = std::i32::MAX;
-    let mut max_price = std::i32::MIN;
+    let mut min_price = std::u32::MAX;
+    let mut max_price = std::u32::MIN;
 
     let mut cut_by_max_price_count = 0;
     let mut cut_by_min_price_count = 0;
@@ -115,7 +115,7 @@ pub fn process_products(
             min_price = product.price_sale;
         }
         // Max price.
-        if product.price_sale < max_price {
+        if product.price_sale > max_price {
             max_price = product.price_sale;
         }
 
@@ -144,13 +144,15 @@ pub fn process_products(
         "Using {} products from {}",
         used_products_count, total_products_count
     );
+    println!("Min price: {}", min_price);
+    println!("Max price: {}", max_price);
     println!(
         "Products cutted by min price({}): {}",
-        min_price, cut_by_min_price_count
+        filter.min_price, cut_by_min_price_count
     );
     println!(
         "Products cutted by max price({}): {}",
-        max_price, cut_by_max_price_count
+        filter.max_price, cut_by_max_price_count
     );
     println!(
         "Products cutted by categories filter: {}",
@@ -161,7 +163,8 @@ pub fn process_products(
         selected_categories_text.len(),
         all_categories_text.len()
     );
-    // updateDBCategories(&mCategoryAll)
-    // Update all categories.
-    // todo
+    // Update existing categories on db.
+    for (text, products_qtd) in all_categories_text.iter() {
+        Category::new(&text, *products_qtd, false).save_or_update_only_products_qtd(&conn);
+    }
 }
