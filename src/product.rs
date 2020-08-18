@@ -370,11 +370,11 @@ mod test {
 
     #[test]
     fn crud() {
-        let conn = rusqlite::Connection::open(&Config::new().db_filename).unwrap();
+        let mut conn = rusqlite::Connection::open(&Config::new().db_filename).unwrap();
         let now = super::super::now!();
 
         ///////////////////////////////////////////////////////////////////////
-        // PRODUCT HISTORY
+        // PRODUCT
         ///////////////////////////////////////////////////////////////////////
         // Remove all.
         Product::remove_all(&conn);
@@ -407,9 +407,13 @@ mod test {
 
         // Insert.
         let mut product_example = product_example!(now);
-        product_example.save_history(&conn);
+        // To exemplify transaction. 
+        let tx = conn.transaction().unwrap();
+        product_example.save_history(&tx);
         product_example.changed_at = now + chrono::Duration::seconds(1);
-        product_example.save_history(&conn);
+        product_example.save_history(&tx);
+        tx.commit().unwrap();
+
         assert_eq!(Product::get_all(&conn).len(), 2);
     }
 }

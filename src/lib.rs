@@ -28,7 +28,7 @@ pub fn run(config: config::Config) -> Result<(), Box<dyn std::error::Error>> {
     config.log();
 
     // Init db connection.
-    let conn = rusqlite::Connection::open(&config.db_filename).unwrap();
+    let mut conn = rusqlite::Connection::open(&config.db_filename).unwrap();
 
     // Import products from xml.
     let stdin = std::io::stdin();
@@ -41,7 +41,12 @@ pub fn run(config: config::Config) -> Result<(), Box<dyn std::error::Error>> {
         selected_categories.insert(&sel_category.name, sel_category);
     }
 
-    process_products(&mut products, &selected_categories, &config.filter, &conn);
+    process_products(
+        &mut products,
+        &selected_categories,
+        &config.filter,
+        &mut conn,
+    );
 
     // // Insert product.
     // info!("Products quanatity: {}", products.len());
@@ -54,7 +59,7 @@ pub fn process_products(
     products: &mut Vec<Product>,
     selected_categories: &HashMap<&String, &Category>,
     filter: &config::Filter,
-    conn: &rusqlite::Connection,
+    conn: &mut rusqlite::Connection,
 ) {
     let mut min_price = std::u32::MAX;
     let mut max_price = std::u32::MIN;
@@ -131,15 +136,18 @@ pub fn process_products(
             let db_product = db_product.unwrap();
             // Product changed.
             if product != &db_product {
+                // Save product on history and update product.
+                let tx = conn.transaction().unwrap();
                 // Save on history.
-                db_product.save_history(&conn);
+                db_product.save_history(&tx);
                 // Update product.
                 product.created_at = db_product.created_at;
                 product.changed_at = now;
                 product.zunka_product_id = db_product.zunka_product_id;
-                product.update(&conn);
+                product.update(&tx);
                 // Update zunkasite product.
                 // todo
+                tx.commit().unwrap();
             }
         }
     }
