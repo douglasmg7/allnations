@@ -35,19 +35,18 @@ pub fn run(config: config::Config) -> Result<(), Box<dyn std::error::Error>> {
     let mut products = Product::from_xml(stdin.lock());
 
     // Get all categories and selected categories.
-    let categories_array = Category::get_all_selected(&conn);
-    // let mut categories: HashMap<&str, &Category> = HashMap::new();
-    let mut categories = HashMap::<&str, &Category>::new();
+    let categories_array = Category::get_all(&conn);
+    let mut categories = HashMap::<String, &Category>::new();
     let mut selected_categories = HashSet::new();
     for category in categories_array.iter() {
-        categories.insert(&category.name, category);
+        categories.insert(category.name.clone(), category);
         if category.selected {
-            selected_categories.insert(&category.name);
+            selected_categories.insert(category.name.clone());
         }
     }
 
     // Process products.
-    let mut new_categories = process_products(
+    let new_categories = process_products(
         &mut products,
         &selected_categories,
         &config.filter,
@@ -55,8 +54,8 @@ pub fn run(config: config::Config) -> Result<(), Box<dyn std::error::Error>> {
     );
 
     // Update categories.
-    for (_name, new_category) in new_categories.iter() {
-        match categories.get(&new_category.name) {
+    for (name, new_category) in new_categories.iter() {
+        match categories.get(name) {
             Some(category) => {
                 if *category != new_category {
                     new_category.update(&conn);
@@ -68,27 +67,13 @@ pub fn run(config: config::Config) -> Result<(), Box<dyn std::error::Error>> {
         }
     }
 
-    // // Update categories.
-    // for (_name, new_category) in new_categories.iter() {
-    // match categories.get(&new_category.name) {
-    // Some(category) => {
-    // if *category != new_category {
-    // new_category.update(&conn);
-    // }
-    // }
-    // None => {
-    // new_category.save(&conn);
-    // }
-    // }
-    // }
-
     Ok(())
 }
 
 /// Proccess products.
 pub fn process_products(
     products: &mut Vec<Product>,
-    selected_categories: &HashSet<&String>,
+    selected_categories: &HashSet<String>,
     filter: &config::Filter,
     conn: &mut rusqlite::Connection,
 ) -> HashMap<String, Category> {

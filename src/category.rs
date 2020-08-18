@@ -23,7 +23,7 @@ impl Category {
     pub fn name_from_text(text: &str) -> String {
         text.split_whitespace()
             .collect::<Vec<&str>>()
-            .join(" ")
+            .join("_")
             .to_uppercase()
     }
 
@@ -70,7 +70,7 @@ impl Category {
     }
 
     // Get all.
-    pub fn get_all(conn: &rusqlite::Connection) -> Option<Vec<Category>> {
+    pub fn get_all(conn: &rusqlite::Connection) -> Vec<Category> {
         let mut stmt = conn
             .prepare("SELECT name, text, products_qtd, selected FROM category")
             .unwrap();
@@ -83,7 +83,7 @@ impl Category {
         for category in categories_iter {
             categories.push(category.unwrap());
         }
-        Some(categories)
+        categories
     }
 
     // Get all selected.
@@ -129,6 +129,12 @@ mod test {
     }
 
     #[test]
+    fn name_from_text() {
+        let cat = super::Category::name_from_text(" SuPER   CATEgory a   ");
+        assert_eq!(cat, "SUPER_CATEGORY_A");
+    }
+
+    #[test]
     fn crud() {
         let conn = rusqlite::Connection::open(&Config::new().db_filename).unwrap();
 
@@ -140,7 +146,7 @@ mod test {
         Category::new("Computadores", 4, true).save(&conn);
 
         // Get all.
-        let categories = Category::get_all(&conn).unwrap();
+        let categories = Category::get_all(&conn);
         assert!(categories.len() > 1);
 
         // Insert or update.
