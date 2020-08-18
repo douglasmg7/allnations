@@ -1,6 +1,6 @@
 use category::Category;
 use chrono::{FixedOffset, Utc};
-use log::error;
+use log::{error, info};
 use product::Product;
 use std::collections::{HashMap, HashSet};
 use std::panic;
@@ -44,7 +44,7 @@ pub fn run(config: config::Config) -> Result<(), Box<dyn std::error::Error>> {
     process_products(&mut products, &selected_categories, &config.filter, &conn);
 
     // // Insert product.
-    // debug!("Products quanatity: {}", products.len());
+    // info!("Products quanatity: {}", products.len());
     Ok(())
 }
 
@@ -140,25 +140,27 @@ pub fn process_products(
             }
         }
     }
-    println!(
+    info!(
         "Using {} products from {}",
         used_products_count, total_products_count
     );
-    println!("Min price: {}", min_price);
-    println!("Max price: {}", max_price);
-    println!(
+    info!("Min price: {}", formated_price_from_u32(min_price));
+    info!("Max price: {}", formated_price_from_u32(max_price));
+    info!(
         "Products cutted by min price({}): {}",
-        filter.min_price, cut_by_min_price_count
+        formated_price_from_u32(filter.min_price),
+        cut_by_min_price_count
     );
-    println!(
+    info!(
         "Products cutted by max price({}): {}",
-        filter.max_price, cut_by_max_price_count
+        formated_price_from_u32(filter.max_price),
+        cut_by_max_price_count
     );
-    println!(
+    info!(
         "Products cutted by categories filter: {}",
         cut_by_category_count
     );
-    println!(
+    info!(
         "Using {} categories from {}",
         selected_categories_text.len(),
         all_categories_text.len()
@@ -167,4 +169,39 @@ pub fn process_products(
     for (text, products_qtd) in all_categories_text.iter() {
         Category::new(&text, *products_qtd, false).save_or_update_only_products_qtd(&conn);
     }
+}
+
+// Formated price from u32.
+fn formated_price_from_u32(num: u32) -> String {
+    let s = num.to_string().chars().rev().collect::<String>();
+    let mut result = String::new();
+    for (i, c) in s.char_indices() {
+        result.push(c);
+        match i {
+            1 => {
+                result.push('.');
+            }
+            4 => {
+                result.push(',');
+            }
+            7 => {
+                result.push(',');
+            }
+            _ => {}
+        }
+    }
+    match result.len() {
+        1 => {
+            result.push_str("0,0");
+        }
+        2 => {
+            result.push_str(",0");
+        }
+        3 => {
+            result.push_str("0");
+        }
+        _ => {}
+    }
+    let result = result.chars().rev().collect::<String>();
+    format!("R$ {}", result)
 }
