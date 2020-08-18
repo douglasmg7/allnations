@@ -18,7 +18,10 @@ pub enum RunMode {
 }
 
 // Run.
-pub fn run(config: config::Config) -> Result<(), Box<dyn std::error::Error>> {
+pub fn run<T: std::io::Read>(
+    config: config::Config,
+    file: T,
+) -> Result<(), Box<dyn std::error::Error>> {
     // Log panic as error.
     panic::set_hook(Box::new(|info| {
         error!("{}", info);
@@ -30,9 +33,12 @@ pub fn run(config: config::Config) -> Result<(), Box<dyn std::error::Error>> {
     // Init db connection.
     let mut conn = rusqlite::Connection::open(&config.db_filename).unwrap();
 
+    // // Import products from xml.
+    // let stdin = std::io::stdin();
+    // let mut products = Product::from_xml(stdin.lock());
+
     // Import products from xml.
-    let stdin = std::io::stdin();
-    let mut products = Product::from_xml(stdin.lock());
+    let mut products = Product::from_xml(file);
 
     // Get all categories and selected categories.
     let categories_array = Category::get_all(&conn);
@@ -229,12 +235,34 @@ fn formated_price_from_u32(num: u32) -> String {
 }
 
 mod test {
-
     #[test]
     fn formated_price() {
         assert_eq!(super::formated_price_from_u32(1), "R$ 0.01");
         assert_eq!(super::formated_price_from_u32(12), "R$ 0.12");
         assert_eq!(super::formated_price_from_u32(123), "R$ 1.23");
         assert_eq!(super::formated_price_from_u32(123456789), "R$ 1,234,567.89");
+    }
+
+    #[test]
+    fn run() {
+        use std::fs::File;
+        use std::io::BufReader;
+
+        let mut path_a = std::env::current_dir().unwrap();
+        path_a.push("xml");
+        let mut path_b = path_a.clone();
+        path_a.push("allnations_products_a.xml");
+        path_b.push("allnations_products_b.xml");
+        // println!("path_a: {:?}", path_a);
+
+        // Run using file a.
+        let file = File::open(path_a).unwrap();
+        let config = super::config::Config::new();
+        assert!(super::run(config, BufReader::new(file)).is_ok());
+
+        // Run using file b.
+        let file = File::open(path_b).unwrap();
+        let config = super::config::Config::new();
+        assert!(super::run(config, BufReader::new(file)).is_ok());
     }
 }
