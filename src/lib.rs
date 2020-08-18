@@ -195,10 +195,10 @@ fn formated_price_from_u32(num: u32) -> String {
     }
     match result.len() {
         1 => {
-            result.push_str("0,0");
+            result.push_str("0.0");
         }
         2 => {
-            result.push_str(",0");
+            result.push_str(".0");
         }
         3 => {
             result.push_str("0");
@@ -207,4 +207,15 @@ fn formated_price_from_u32(num: u32) -> String {
     }
     let result = result.chars().rev().collect::<String>();
     format!("R$ {}", result)
+}
+
+mod test {
+
+    #[test]
+    fn formated_price() {
+        assert_eq!(super::formated_price_from_u32(1), "R$ 0.01");
+        assert_eq!(super::formated_price_from_u32(12), "R$ 0.12");
+        assert_eq!(super::formated_price_from_u32(123), "R$ 1.23");
+        assert_eq!(super::formated_price_from_u32(123456789), "R$ 1,234,567.89");
+    }
 }
