@@ -128,9 +128,12 @@ pub fn process_products(
         }
         // Existing product.
         else {
-            // Product changed.
             let db_product = db_product.unwrap();
+            // Product changed.
             if product != &db_product {
+                // Save on history.
+                db_product.save_history(&conn);
+                // Update product.
                 product.created_at = db_product.created_at;
                 product.changed_at = now;
                 product.zunka_product_id = db_product.zunka_product_id;

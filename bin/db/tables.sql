@@ -56,7 +56,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_product_code ON product(code);
 -- Products history.
 CREATE TABLE IF NOT EXISTS product_history (
     zunka_product_id		TEXT DEFAULT "",
-    code                    TEXT NOT NULL UNIQUE,	-- From dealer.
+    code                    TEXT NOT NULL,	-- From dealer.
     description             TEXT NOT NULL,
     timestamp               DATE NOT NULL,
     department              TEXT NOT NULL,

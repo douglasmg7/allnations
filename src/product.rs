@@ -23,6 +23,10 @@ lazy_static::lazy_static! {
         r#"INSERT INTO product ({}) VALUES ({})"#,
         PRODUCT_FIELDS, &*PRODUCT_FIELDS_INSERT // &* To go inside the wrap.
     );
+    static ref SQL_INSERT_HIS: String = format!(
+        r#"INSERT INTO product_history ({}) VALUES ({})"#,
+        PRODUCT_FIELDS, &*PRODUCT_FIELDS_INSERT // &* To go inside the wrap.
+    );
     
     // Select by code.
     static ref SQL_SELECT_BY_CODE: String = format!(
@@ -79,7 +83,7 @@ pub struct Product {
 
 impl Product {
     pub fn new() -> Self {
-        let now = Utc::now().with_timezone(&FixedOffset::west(3 * 3600));
+        let now = super::now!();
         Product {
             zunka_product_id: String::new(),
             code: "1111".to_string(),
@@ -132,6 +136,12 @@ impl Product {
         super::stmt_execute_named_product!(stmt, self);
     }
 
+    // Save history on db.
+    pub fn save_history(&self, conn: &rusqlite::Connection) {
+        let mut stmt = conn.prepare(&SQL_INSERT_HIS).unwrap();
+        super::stmt_execute_named_product!(stmt, self);
+    }
+
     // Update on db.
     pub fn update(&self, conn: &rusqlite::Connection) {
         let mut stmt = conn.prepare(&SQL_UPDATE_BY_CODE).unwrap();
@@ -144,10 +154,31 @@ impl Product {
             .unwrap();
     }
 
+    // Remove all from db.
+    pub fn remove_all_history(conn: &rusqlite::Connection) {
+        conn.execute("DELETE FROM product_history", rusqlite::NO_PARAMS)
+            .unwrap();
+    }
+
     // Get all from db.
     pub fn get_all(conn: &rusqlite::Connection) -> Vec<Product> {
         let mut stmt = conn
             .prepare(&format!("SELECT {} FROM product", PRODUCT_FIELDS))
+            .unwrap();
+        let iter = stmt
+            .query_map(rusqlite::params![], |row| Ok(super::product_from_row!(row)))
+            .unwrap();
+        let mut products = Vec::new();
+        for product in iter {
+            products.push(product.unwrap());
+        }
+        products
+    }
+
+    // Get all from db history.
+    pub fn get_all_hsitory(conn: &rusqlite::Connection) -> Vec<Product> {
+        let mut stmt = conn
+            .prepare(&format!("SELECT {} FROM product_history", PRODUCT_FIELDS))
             .unwrap();
         let iter = stmt
             .query_map(rusqlite::params![], |row| Ok(super::product_from_row!(row)))
@@ -340,12 +371,15 @@ mod test {
     #[test]
     fn crud() {
         let conn = rusqlite::Connection::open(&Config::new().db_filename).unwrap();
+        let now = super::super::now!();
 
+        ///////////////////////////////////////////////////////////////////////
+        // PRODUCT HISTORY
+        ///////////////////////////////////////////////////////////////////////
         // Remove all.
         Product::remove_all(&conn);
 
         // Insert.
-        let now = Utc::now().with_timezone(&FixedOffset::west(3 * 3600));
         Product::new().save(&conn);
         let product_example = product_example!(now);
         product_example.save(&conn);
@@ -364,5 +398,18 @@ mod test {
         // Get all.
         let products = Product::get_all(&conn);
         assert!(products.len() > 1);
+
+        ///////////////////////////////////////////////////////////////////////
+        // PRODUCT HISTORY
+        ///////////////////////////////////////////////////////////////////////
+        // Remove all.
+        Product::remove_all_history(&conn);
+
+        // Insert.
+        let mut product_example = product_example!(now);
+        product_example.save_history(&conn);
+        product_example.changed_at = now + chrono::Duration::seconds(1);
+        product_example.save_history(&conn);
+        assert_eq!(Product::get_all(&conn).len(), 2);
     }
 }
