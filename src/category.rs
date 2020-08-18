@@ -19,6 +19,14 @@ impl Category {
         }
     }
 
+    // Create category name from category text.
+    pub fn name_from_text(text: &str) -> String {
+        text.split_whitespace()
+            .collect::<Vec<&str>>()
+            .join(" ")
+            .to_uppercase()
+    }
+
     // Insert on db.
     pub fn save(&self, conn: &rusqlite::Connection) {
         let sql = "INSERT INTO category (name, text, products_qtd, selected) VALUES (:name, :text, :products_qtd, :selected)";
@@ -30,6 +38,13 @@ impl Category {
     pub fn save_or_update_only_products_qtd(&self, conn: &rusqlite::Connection) {
         let sql = "INSERT INTO category (name, text, products_qtd, selected) VALUES (:name, :text, :products_qtd, :selected)\
                    ON CONFLICT(name) DO UPDATE SET products_qtd=excluded.products_qtd";
+        let mut stmt = conn.prepare(sql).unwrap();
+        super::stmt_execute_named_category!(stmt, self);
+    }
+
+    // Update on db.
+    pub fn update(&self, conn: &rusqlite::Connection) {
+        let sql = r#"UPDATE category SET text = :text, products_qtd = :products_qtd, selected = :selected WHERE name = :name"#;
         let mut stmt = conn.prepare(sql).unwrap();
         super::stmt_execute_named_category!(stmt, self);
     }
@@ -143,5 +158,14 @@ mod test {
         assert_eq!(saved_category.products_qtd, category.products_qtd);
         // Must not update selected.
         assert_eq!(saved_category.selected, true);
+
+        // Update.
+        let mut category = Category::new("hds", 20, false);
+        category.save(&conn);
+        category.products_qtd = 10;
+        category.selected = true;
+        category.update(&conn);
+        let saved_category = Category::get_one(&conn, &category.name).unwrap();
+        assert_eq!(saved_category, category);
     }
 }

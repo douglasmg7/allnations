@@ -34,45 +34,72 @@ pub fn run(config: config::Config) -> Result<(), Box<dyn std::error::Error>> {
     let stdin = std::io::stdin();
     let mut products = Product::from_xml(stdin.lock());
 
-    // Get all selected categories.
-    let selected_categories_array = Category::get_all_selected(&conn);
-    let mut selected_categories = HashMap::new();
-    for sel_category in selected_categories_array.iter() {
-        selected_categories.insert(&sel_category.name, sel_category);
+    // Get all categories and selected categories.
+    let categories_array = Category::get_all_selected(&conn);
+    // let mut categories: HashMap<&str, &Category> = HashMap::new();
+    let mut categories = HashMap::<&str, &Category>::new();
+    let mut selected_categories = HashSet::new();
+    for category in categories_array.iter() {
+        categories.insert(&category.name, category);
+        if category.selected {
+            selected_categories.insert(&category.name);
+        }
     }
 
-    process_products(
+    // Process products.
+    let mut new_categories = process_products(
         &mut products,
         &selected_categories,
         &config.filter,
         &mut conn,
     );
 
-    // // Insert product.
-    // info!("Products quanatity: {}", products.len());
+    // Update categories.
+    for (_name, new_category) in new_categories.iter() {
+        match categories.get(&new_category.name) {
+            Some(category) => {
+                if *category != new_category {
+                    new_category.update(&conn);
+                }
+            }
+            None => {
+                new_category.save(&conn);
+            }
+        }
+    }
+
+    // // Update categories.
+    // for (_name, new_category) in new_categories.iter() {
+    // match categories.get(&new_category.name) {
+    // Some(category) => {
+    // if *category != new_category {
+    // new_category.update(&conn);
+    // }
+    // }
+    // None => {
+    // new_category.save(&conn);
+    // }
+    // }
+    // }
+
     Ok(())
 }
 
-#[allow(unused_variables)]
-#[allow(unused_mut)]
+/// Proccess products.
 pub fn process_products(
     products: &mut Vec<Product>,
-    selected_categories: &HashMap<&String, &Category>,
+    selected_categories: &HashSet<&String>,
     filter: &config::Filter,
     conn: &mut rusqlite::Connection,
-) {
+) -> HashMap<String, Category> {
+    let mut new_categories: HashMap<String, Category> = HashMap::new();
+
     let mut min_price = std::u32::MAX;
     let mut max_price = std::u32::MIN;
 
     let mut cut_by_max_price_count = 0;
     let mut cut_by_min_price_count = 0;
     let mut cut_by_category_count = 0;
-
-    // All categories text by products quantity.
-    let mut all_categories_text = HashMap::<String, i32>::new();
-    // Selected categories text by products quantity.
-    let mut selected_categories_text = HashSet::<String>::new();
-    // let categories_in_use = HashMap::new();
 
     let mut total_products_count = 0;
     let mut used_products_count = 0;
@@ -81,28 +108,30 @@ pub fn process_products(
 
     for product in products.iter_mut() {
         total_products_count += 1;
-        // Add category.
-        all_categories_text.insert(
-            product.category.clone(),
-            all_categories_text.get(&product.category).unwrap_or(&0) + 1,
-        );
         // Filter by category.
-        if selected_categories
-            .get(
-                &product
-                    .category
-                    .split_whitespace()
-                    .collect::<Vec<&str>>()
-                    .join("_")
-                    .to_uppercase(),
-            )
-            .is_none()
-        {
+        let name = Category::name_from_text(&product.category);
+        // Inc not selected categories.
+        if selected_categories.get(&name).is_none() {
             cut_by_category_count += 1;
+            match new_categories.get_mut(&name) {
+                Some(category) => {
+                    category.products_qtd += 1;
+                }
+                None => {
+                    new_categories.insert(name, Category::new(&product.category, 1, false));
+                }
+            }
             continue;
         }
-        // Add category in use.
-        selected_categories_text.insert(product.category.clone());
+        // Inc selected categories.
+        match new_categories.get_mut(&name) {
+            Some(category) => {
+                category.products_qtd += 1;
+            }
+            None => {
+                new_categories.insert(name, Category::new(&product.category, 1, true));
+            }
+        }
         // Filter by min price.
         if product.price_sale < filter.min_price {
             cut_by_min_price_count += 1;
@@ -173,13 +202,10 @@ pub fn process_products(
     );
     info!(
         "Using {} categories from {}",
-        selected_categories_text.len(),
-        all_categories_text.len()
+        selected_categories.len(),
+        new_categories.len()
     );
-    // Update existing categories on db.
-    for (text, products_qtd) in all_categories_text.iter() {
-        Category::new(&text, *products_qtd, false).save_or_update_only_products_qtd(&conn);
-    }
+    new_categories
 }
 
 // Formated price from u32.
