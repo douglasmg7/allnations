@@ -9,7 +9,7 @@ fn main() {
     let config = allnations::config::Config::new();
     // Run.
     let stdin = std::io::stdin();
-    if let Err(e) = allnations::run(config, stdin.lock()) {
+    if let Err(e) = allnations::run(&config, stdin.lock()) {
         error!("Application error: {}", e);
         process::exit(1);
     }

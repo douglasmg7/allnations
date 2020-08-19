@@ -1,13 +1,51 @@
+use super::RunMode;
 use chrono::Local;
+use lazy_static::lazy_static;
 use log;
 
-static LOGGER: Logger = Logger;
+struct Logger {
+    run_mode: RunMode,
+}
+
+static NUM: i32 = 3;
+
+static LOGGER: Logger = Logger {
+    run_mode: RunMode::Dev(),
+};
+
+// lazy_static! {
+// static ref LOGGER: Logger = {
+// let lg = Logger {
+// run_mode: RunMode::Dev(),
+// };
+// lg
+// };
+// }
 
 pub fn init() -> Result<(), log::SetLoggerError> {
+    // lazy_static! {
+    // static ref LOGGER: Logger = {
+    // let lg = Logger {
+    // run_mode: RunMode::Dev(),
+    // };
+    // lg
+    // };
+    // }
+    println!("NUM: {}", NUM);
+    LOGGER::test();
     log::set_logger(&LOGGER).map(|()| log::set_max_level(log::LevelFilter::Trace))
 }
 
-struct Logger;
+impl Logger {
+    fn test(&self) {
+        match self.run_mode {
+            RunMode::Dev() => {
+                println!("Test");
+            }
+            _ => {}
+        }
+    }
+}
 
 impl log::Log for Logger {
     fn enabled(&self, _metadata: &log::Metadata) -> bool {
@@ -34,14 +72,19 @@ impl log::Log for Logger {
                         record.args()
                     );
                 }
-                log::Level::Info => {
-                    message = format!(
-                        "{} [{}] [info] {}",
-                        Local::now().format("%Y/%m/%d %H:%M:%S%.6f"),
-                        record.target(),
-                        record.args()
-                    );
-                }
+                log::Level::Info => match self.run_mode {
+                    RunMode::Dev() | RunMode::Test() => {
+                        message = format!("{}", record.args());
+                    }
+                    _ => {
+                        message = format!(
+                            "{} [{}] [info] {}",
+                            Local::now().format("%Y/%m/%d %H:%M:%S%.6f"),
+                            record.target(),
+                            record.args()
+                        );
+                    }
+                },
                 log::Level::Debug => {
                     message = format!(
                         "{} [{}] [debug] {}",
