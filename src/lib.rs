@@ -150,6 +150,7 @@ pub fn process_products(
             product.created_at = now;
             product.changed_at = now;
             product.save(&conn);
+            info!("New product, code: {}", product.code);
         }
         // Existing product.
         else {
@@ -168,6 +169,7 @@ pub fn process_products(
                 // Update zunkasite product.
                 // todo
                 tx.commit().unwrap();
+                info!("Updated product, code: {}", product.code);
             }
         }
     }
