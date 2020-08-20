@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
-cargo test -- --show-output --ignored
+RUST_TEST_THREADS=1 cargo test
+# cargo test -- --show-output --ignored
 # cargo test -- --show-output
 # cargo test -- --show-output --ignored
 # cargo test print -- --ignored

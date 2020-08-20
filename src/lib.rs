@@ -247,32 +247,48 @@ mod test {
         assert_eq!(super::formated_price_from_u32(123456789), "R$ 1,234,567.89");
     }
 
-    // #[test]
-    // fn run() {
-    // use std::fs::File;
-    // use std::io::BufReader;
+    #[test]
+    fn run() {
+        use super::{category::Category, config::Config, logger, product::Product};
+        use std::{fs::File, io::BufReader};
 
-    // let mut conn = rusqlite::Connection::open(&super::Config::new().db_filename).unwrap();
-    // // let now = super::super::now!();
+        // Config.
+        let config = Box::leak(Box::new(Config::new()));
 
-    // // Remove all categories.
-    // Category::remove_all(&conn);
+        // Connection.
+        let conn = rusqlite::Connection::open(&config.db_filename).unwrap();
 
-    // let mut path_a = std::env::current_dir().unwrap();
-    // path_a.push("xml");
-    // let mut path_b = path_a.clone();
-    // path_a.push("allnations_products_a.xml");
-    // path_b.push("allnations_products_b.xml");
-    // // println!("path_a: {:?}", path_a);
+        // Init log.
+        logger::init(&config.run_mode).unwrap();
 
-    // // Run using file a.
-    // let file = File::open(path_a).unwrap();
-    // let config = super::config::Config::new();
-    // assert!(super::run(config, BufReader::new(file)).is_ok());
+        // Clean db.
+        Category::remove_all(&conn);
+        Product::remove_all(&conn);
+        Product::remove_all_history(&conn);
 
-    // // Run using file b.
-    // let file = File::open(path_b).unwrap();
-    // let config = super::config::Config::new();
-    // assert!(super::run(config, BufReader::new(file)).is_ok());
-    // }
+        // Add category to use.
+        let category_to_use = Category::new("ARMAZENAMENTO", 2, true);
+        category_to_use.save(&conn);
+
+        let mut path_a = std::env::current_dir().unwrap();
+        path_a.push("xml");
+        let mut path_b = path_a.clone();
+        path_a.push("allnations_products_a.xml");
+        path_b.push("allnations_products_b.xml");
+
+        // Run using file a.
+        let file = File::open(path_a).unwrap();
+        assert!(super::run(&config, BufReader::new(file)).is_ok());
+        let product = Product::get_one(&conn, "0070495").unwrap();
+        assert_eq!(product.price_sale, 206136);
+        assert_eq!(Product::get_all_hsitory(&conn).len(), 0);
+
+        // Run using file b.
+        let file = File::open(path_b).unwrap();
+        assert!(super::run(&config, BufReader::new(file)).is_ok());
+        let product = Product::get_one(&conn, "0070495").unwrap();
+        assert_eq!(product.price_sale, 207136);
+        assert_eq!(Product::get_all_hsitory(&conn)[0].price_sale, 206136);
+        assert_eq!(Category::get_all(&conn).len(), 39);
+    }
 }
