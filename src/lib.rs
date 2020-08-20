@@ -85,8 +85,8 @@ pub fn process_products(
 ) -> HashMap<String, Category> {
     let mut new_categories: HashMap<String, Category> = HashMap::new();
 
-    let mut min_price = std::u32::MAX;
-    let mut max_price = std::u32::MIN;
+    let mut min_price = u32::MAX;
+    let mut max_price = u32::MIN;
 
     let mut cut_by_max_price_count = 0;
     let mut cut_by_min_price_count = 0;
@@ -175,8 +175,12 @@ pub fn process_products(
         "Using {} products from {}",
         used_products_count, total_products_count
     );
-    info!("Min price: {}", formated_price_from_u32(min_price));
-    info!("Max price: {}", formated_price_from_u32(max_price));
+    if min_price != u32::MAX {
+        info!("Min price: {}", formated_price_from_u32(min_price));
+    }
+    if max_price != u32::MIN {
+        info!("Max price: {}", formated_price_from_u32(max_price));
+    }
     info!(
         "Products cutted by min price({}): {}",
         formated_price_from_u32(filter.min_price),
