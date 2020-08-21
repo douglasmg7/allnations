@@ -1,0 +1,1 @@
+sudo ln -s /home/douglasmg7/code/allnations/bin/profile.d/allnations.sh /etc/profile.d/allnations.sh
