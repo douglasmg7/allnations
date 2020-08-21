@@ -114,8 +114,7 @@ pub fn run<T: std::io::Read>(
 /// Proccess products.
 pub fn process_products(products: &mut Vec<Product>, conn: &mut rusqlite::Connection) {
     let mut total_count = 0;
-    let mut changed_new_timestamp_count = 0;
-    let mut changed_same_timestamp_count = 0;
+    let mut changed_count = 0;
     let mut new_count = 0;
     let mut old_count = 0;
     let mut not_changed_count = 0;
@@ -149,15 +148,11 @@ pub fn process_products(products: &mut Vec<Product>, conn: &mut rusqlite::Connec
                 continue;
             }
             // Product changed.
-            if product.timestamp == db_product.timestamp {
-                let diff = product.diff(&db_product);
-                if diff.len() != 0 {
-                    debug!("Diff:\n{}", diff);
-                }
-                changed_same_timestamp_count += 1;
-            } else {
-                changed_new_timestamp_count += 1;
+            let diff = product.diff(&db_product);
+            if diff.len() != 0 {
+                debug!("Diff for product {}\n{}", product.code, diff);
             }
+            changed_count += 1;
             let tx = conn.transaction().unwrap();
             // Save on history.
             db_product.save_history(&tx);
@@ -172,12 +167,19 @@ pub fn process_products(products: &mut Vec<Product>, conn: &mut rusqlite::Connec
         }
     }
     info!("**********  Products  **********");
-    info!("              Processed: {}", total_count);
-    info!("                    New: {}", new_count);
-    info!(" Changed, new timestamp: {}", changed_new_timestamp_count);
-    info!("Changed, same timestamp: {}", changed_same_timestamp_count);
-    info!("          Old timestamp: {}", old_count);
-    info!("            Not changed: {}", not_changed_count);
+    info!("    Processed: {}", total_count);
+    if new_count > 0 {
+        info!("          New: {}", new_count);
+    }
+    if changed_count > 0 {
+        info!("      Changed: {}", changed_count);
+    }
+    if old_count > 0 {
+        info!("Old timestamp: {}", old_count);
+    }
+    if not_changed_count > 0 {
+        info!("  Not changed: {}", not_changed_count);
+    }
 }
 
 // Formated price from u32.

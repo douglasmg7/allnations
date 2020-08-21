@@ -1,4 +1,4 @@
-use chrono::{DateTime, FixedOffset, Utc, SecondsFormat};
+use chrono::{DateTime, FixedOffset, Utc};
 
 use lazy_static;
 use std::fmt;
@@ -389,18 +389,18 @@ impl Product {
         if self.stock_qty != other.stock_qty {
             diff.push_str(&format!("stock_qty\n\t  self: {}\n\t other: {}\n", self.stock_qty, other.stock_qty));
         }
-        if self.created_at != other.created_at {
-            diff.push_str(&format!("created_at\n\t  self: {}\n\t other: {}\n", self.created_at, other.created_at));
-        }
-        if self.changed_at != other.changed_at {
-            diff.push_str(&format!("changed_at\n\t  self: {}\n\t other: {}\n", self.changed_at, other.changed_at));
-        }
-        if self.checked_at != other.checked_at {
-            diff.push_str(&format!("checked_at\n\t  self: {}\n\t other: {}\n", self.checked_at, other.checked_at));
-        }
-        if self.removed_at != other.removed_at {
-            diff.push_str(&format!("removed_at\n\t  self: {}\n\t other: {}\n", self.removed_at, other.removed_at));
-        }
+        // if self.created_at != other.created_at {
+            // diff.push_str(&format!("created_at\n\t  self: {}\n\t other: {}\n", self.created_at, other.created_at));
+        // }
+        // if self.changed_at != other.changed_at {
+            // diff.push_str(&format!("changed_at\n\t  self: {}\n\t other: {}\n", self.changed_at, other.changed_at));
+        // }
+        // if self.checked_at != other.checked_at {
+            // diff.push_str(&format!("checked_at\n\t  self: {}\n\t other: {}\n", self.checked_at, other.checked_at));
+        // }
+        // if self.removed_at != other.removed_at {
+            // diff.push_str(&format!("removed_at\n\t  self: {}\n\t other: {}\n", self.removed_at, other.removed_at));
+        // }
         diff
     }
 }

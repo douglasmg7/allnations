@@ -46,7 +46,7 @@ fi
 
 # If a valid size, copy as last xml file to process.
 # echo size: $FILE_SIZE
-if [[ "$FILE_SIZE" -gt "100" ]]; then
+if [[ "$FILE_SIZE" -gt "1000" ]]; then
     cp $FILE_BACKUP $FILE_LAST
     echo $NOW > $FILE_LAST_TIME_PRODUCT_WAS_DOWNLOADED
 fi
