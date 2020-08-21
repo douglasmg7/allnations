@@ -1,1 +1,3 @@
 /target
+.gitsecret/keys/random_seed
+/bin/profile.d/allnations.sh
