@@ -1,6 +1,6 @@
 use category::Category;
 use chrono::{FixedOffset, Utc};
-use log::{error, info};
+use log::{error, info, warn};
 use product::Product;
 use std::collections::{HashMap, HashSet};
 use std::panic;
@@ -150,11 +150,16 @@ pub fn process_products(
             product.created_at = now;
             product.changed_at = now;
             product.save(&conn);
-            info!("New product, code: {}", product.code);
+            info!("New product {}", product.code);
         }
         // Existing product.
         else {
             let db_product = db_product.unwrap();
+            // Product is older.
+            if product.timestamp <= db_product.timestamp {
+                warn!("Product {} have a timestamp older or equal, current product: {}, pretended new product: {}", product.code, db_product.timestamp, product.timestamp);
+                continue;
+            }
             // Product changed.
             if product != &db_product {
                 // Save product on history and update product.
@@ -169,7 +174,7 @@ pub fn process_products(
                 // Update zunkasite product.
                 // todo
                 tx.commit().unwrap();
-                info!("Updated product, code: {}", product.code);
+                info!("Product {} updated", product.code);
             }
         }
     }

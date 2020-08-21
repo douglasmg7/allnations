@@ -297,8 +297,10 @@ impl Product {
                     }
                 }
                 Err(e) => {
-                    println!("Error: {}", e);
-                    break;
+                    panic!("Parsing XML: {}", e);
+                    // error!("{}", e);
+                    // println!("Error: {}", e);
+                    // break;
                 }
                 _ => {}
             }

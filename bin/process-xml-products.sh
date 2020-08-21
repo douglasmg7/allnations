@@ -8,11 +8,18 @@ cd $(dirname $0)
 cd ..
 
 # Last downloaded XML file.
-FILE=$ZUNKAPATH/xml/allnations/allnations-products.xml
+FILE=$ZUNKAPATH/xml/allnations/allnations_products_to_process.xml
 
-# if [[ $RUN_MODE == production ]]; then
-if [[ $1 == "-p" ]]; then
-    allnations -p < $FILE
+if [ ! -f $FILE ]; then
+    echo No file $FILE to process.
+    exit 0
+fi
+
+if [[ $RUN_MODE == production ]]; then
+    RUN_MODE=production allnations < $FILE
 else
     cargo run < $FILE
 fi
+
+# Remove file if successful processed.
+[[ $? == 0 ]] && rm $FILE

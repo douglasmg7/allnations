@@ -12,7 +12,7 @@ mkdir -p $XML_PATH
 NOW=$(date +%Y-%m-%dT%H:%M:%S-03:00)
 
 # Last downloaded XML file.
-FILE_LAST=$XML_PATH/allnations_products.xml
+FILE_LAST=$XML_PATH/allnations_products_to_process.xml
 
 # Will not download products information if last file not processed yet.
 if [ -f $FILE_LAST ]; then
@@ -33,9 +33,9 @@ fi
 FILE_BACKUP=$XML_PATH/allnations_products_${NOW}.xml
 
 # Download xml file.
-# URL="http://wspub.allnations.com.br/wsIntEstoqueClientesV2/ServicoReservasPedidosExt.asmx/RetornarListaProdutosEstoque?CodigoCliente=${ALLNATIONS_USER}&Senha=${ALLNATIONS_PASS}&Data=${LAST_TIME_PRODUCT_WAS_DOWNLOADED}"
-# curl -v $URL > $FILE_BACKUP
-echo asdfadsfasdfasdfasdfasdfasdçflkajsdçflajsçdlfkjasdlkfjaçsdlkfjaçlsdkfjçalskdjfçalksdjçflaksjdçflkajsçdlfkajçsdlfkjaçsldkfjçalsdkfjçalskdjfasldfkj > $FILE_BACKUP
+URL="http://wspub.allnations.com.br/wsIntEstoqueClientesV2/ServicoReservasPedidosExt.asmx/RetornarListaProdutosEstoque?CodigoCliente=${ALLNATIONS_USER}&Senha=${ALLNATIONS_PASS}&Data=${LAST_TIME_PRODUCT_WAS_DOWNLOADED}"
+curl -v $URL > $FILE_BACKUP
+# echo asdfadsfasdfasdfasdfasdfasdçflkajsdçflajsçdlfkjasdlkfjaçsdlkfjaçlsdkfjçalskdjfçalksdjçflaksjdçflkajsçdlfkajçsdlfkjaçsldkfjçalsdkfjçalskdjfasldfkj > $FILE_BACKUP
 
 # Get created file size.
 if [[ -f $FILE_BACKUP ]]; then
@@ -45,7 +45,7 @@ else
 fi
 
 # If a valid size, copy as last xml file to process.
-echo size: $FILE_SIZE
+# echo size: $FILE_SIZE
 if [[ "$FILE_SIZE" -gt "100" ]]; then
     cp $FILE_BACKUP $FILE_LAST
     echo $NOW > $FILE_LAST_TIME_PRODUCT_WAS_DOWNLOADED
