@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS param (
 CREATE TABLE IF NOT EXISTS category (
 	name                    TEXT PRIMARY KEY,	-- Name without space.
 	text                    TEXT NOT NULL,
-	products_qtd            INTEGER NOT NULL,
+	products_qty            INTEGER NOT NULL,
 	selected                BOOLEAN NOT NULL
 );
 
@@ -44,7 +44,7 @@ CREATE TABLE IF NOT EXISTS product (
     availability            BOOLEAN NOT NULL,
     origin                  TEXT,
     stock_origin            TEXT,
-    stock_qtd               INTEGER NOT NULL,
+    stock_qty               INTEGER NOT NULL,
     created_at              DATE NOT NULL,
     changed_at              DATE NOT NULL,
     checked_at              DATE DEFAULT "0001-01-01T03:00:00-03:00",
@@ -80,7 +80,7 @@ CREATE TABLE IF NOT EXISTS product_history (
     availability            BOOLEAN NOT NULL,
     origin                  TEXT,
     stock_origin            TEXT,
-    stock_qtd               INTEGER NOT NULL,
+    stock_qty               INTEGER NOT NULL,
     created_at              DATE NOT NULL,
     changed_at              DATE NOT NULL,
     checked_at              DATE DEFAULT "0001-01-01T03:00:00-03:00",

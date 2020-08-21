@@ -7,7 +7,7 @@ const PRODUCT_FIELDS: &str =
     "zunka_product_id, code, description, timestamp, department, category, sub_category, maker, \
 technical_description, url_image, part_number, ean, ncm, price_sale, price_without_st, \
 icms_st_taxation, warranty_month, length_mm, width_mm, height_mm, weight_g, active, \
-availability, origin, stock_origin, stock_qtd, created_at, changed_at, removed_at, checked_at";
+availability, origin, stock_origin, stock_qty, created_at, changed_at, removed_at, checked_at";
 
 // const ZERO_TIME: &str = "0001-01-01T03:00:00-03:00";
 lazy_static::lazy_static! {
@@ -74,7 +74,7 @@ pub struct Product {
     pub availability: bool,
     pub origin: String,     // Nacional, importado, entre outros...
     pub stock_origin: String,   // RJ, SC or ES.
-    pub stock_qtd: u32,
+    pub stock_qty: u32,
     pub created_at: DateTime<FixedOffset>,
     pub changed_at: DateTime<FixedOffset>,
     pub checked_at: DateTime<FixedOffset>,
@@ -110,7 +110,7 @@ impl Product {
             availability: false,
             origin: String::new(),
             stock_origin: String::new(),
-            stock_qtd: 0,
+            stock_qty: 0,
             created_at: now.clone(),
             changed_at: now.clone(),
             checked_at: ZERO_TIME.clone(),
@@ -282,7 +282,7 @@ impl Product {
                     "SUBSTTRIBUTARIA" => product.icms_st_taxation = text == "1",
                     "ORIGEMPRODUTO" => product.origin = text.clone(),
                     "ESTOQUEDISPONIVEL" => {
-                        product.stock_qtd = (text
+                        product.stock_qty = (text
                             .parse::<f32>()
                             .expect(&format!("Invalid ESTOQUEDISPONIVEL: {}", text)))
                             as u32
@@ -317,13 +317,13 @@ impl fmt::Display for Product {
             \n\turl_image: {}\n\tpart_number: {}\n\tean: {}\n\tncm: {}\
             \n\tprice_sale: {}\n\tprice_without_st: {}\n\ticms_st_taxation: {}\n\twarranty_month: {}\
             \n\tlength_mm: {}\n\twidth_mm: {}\n\theight_mm: {}\n\tweight_g: {}\
-            \n\tactive: {}\n\tavailability: {}\n\torigin: {}\n\tstock_origin: {}\n\tstock_qtd: {}\
+            \n\tactive: {}\n\tavailability: {}\n\torigin: {}\n\tstock_origin: {}\n\tstock_qty: {}\
             \n\tcreated_at: {}\n\tchanged_at: {}\n\tremoved_at: {}\n\tchecked_at: {}",
             self.code, self.description, self.timestamp, self.department, self.category, self.sub_category, self.maker, self.technical_description.len(), 
             self.url_image, self.part_number, self.ean, self.ncm,
             self.price_sale, self.price_without_st, self.icms_st_taxation, self.warranty_month,
             self.length_mm, self.width_mm, self.height_mm, self.weight_g,
-            self.active, self.availability, self.origin, self.stock_origin, self.stock_qtd,
+            self.active, self.availability, self.origin, self.stock_origin, self.stock_qty,
             self.created_at, self.changed_at, self.removed_at, self.checked_at,
         )
     }
@@ -356,7 +356,7 @@ impl PartialEq for Product {
             && self.availability == other.availability
             && self.origin == other.origin
             && self.stock_origin == other.stock_origin
-            && self.stock_qtd == other.stock_qtd
+            && self.stock_qty == other.stock_qty
             && self.created_at.to_rfc3339_opts(SecondsFormat::Secs, false) == other.created_at.to_rfc3339_opts(SecondsFormat::Secs, false)
             && self.changed_at.to_rfc3339_opts(SecondsFormat::Secs, false) == other.changed_at.to_rfc3339_opts(SecondsFormat::Secs, false)
             && self.checked_at.to_rfc3339_opts(SecondsFormat::Secs, false) == other.checked_at.to_rfc3339_opts(SecondsFormat::Secs, false)

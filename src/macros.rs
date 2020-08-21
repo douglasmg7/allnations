@@ -42,7 +42,7 @@ Ecoamigável - Atende aos requisitos RoHS."#.to_string(),
             availability: true,
             origin: "4 - NACIONAL - CONF. PROCESSO PRODUTIVO".to_string(),
             stock_origin: "ES".to_string(),
-            stock_qtd: 42,
+            stock_qty: 42,
             created_at: $now.clone(),
             changed_at: $now.clone(),
             checked_at: ZERO_TIME.clone(),
@@ -82,7 +82,7 @@ macro_rules! stmt_execute_named_product {
                 (":availability", &$product.availability),
                 (":origin", &$product.origin),
                 (":stock_origin", &$product.stock_origin),
-                (":stock_qtd", &$product.stock_qtd),
+                (":stock_qty", &$product.stock_qty),
                 (":created_at", &$product.created_at),
                 (":changed_at", &$product.changed_at),
                 (":checked_at", &$product.checked_at),
@@ -134,7 +134,7 @@ macro_rules! product_from_row {
             availability: $row.get(22).unwrap(),
             origin: $row.get(23).unwrap(),
             stock_origin: $row.get(24).unwrap(),
-            stock_qtd: $row.get(25).unwrap(),
+            stock_qty: $row.get(25).unwrap(),
             created_at: $row
                 .get::<_, DateTime<Utc>>(26)
                 .unwrap()
@@ -166,7 +166,7 @@ macro_rules! stmt_execute_named_category {
             .execute_named(&[
                 (":name", &$category.name),
                 (":text", &$category.text),
-                (":products_qtd", &$category.products_qtd),
+                (":products_qty", &$category.products_qty),
                 (":selected", &$category.selected),
             ])
             .unwrap();
@@ -180,7 +180,7 @@ macro_rules! category_from_row {
         Category {
             name: $row.get(0).unwrap(),
             text: $row.get(1).unwrap(),
-            products_qtd: $row.get(2).unwrap(),
+            products_qty: $row.get(2).unwrap(),
             selected: $row.get(3).unwrap(),
         }
     };

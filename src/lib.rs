@@ -56,7 +56,7 @@ pub fn run<T: std::io::Read>(
         let name = Category::name_from_text(&product.category);
         match categories.get_mut(&name) {
             Some(category) => {
-                category.products_qtd += 1;
+                category.products_qty += 1;
             }
             None => {
                 categories.insert(name.clone(), Category::new(&product.category, 0, false));
@@ -158,140 +158,6 @@ pub fn process_products(products: &mut Vec<Product>, conn: &mut rusqlite::Connec
     info!("Changed products: {}", changed_count);
     info!("Old products: {}", old_count);
 }
-
-// /// Proccess products.
-// pub fn process_products(
-// products: &mut Vec<Product>,
-// selected_categories: &HashSet<String>,
-// filter: &config::Filter,
-// conn: &mut rusqlite::Connection,
-// ) -> HashMap<String, Category> {
-// let mut new_categories: HashMap<String, Category> = HashMap::new();
-
-// let mut min_price = u32::MAX;
-// let mut max_price = u32::MIN;
-
-// let mut cut_by_max_price_count = 0;
-// let mut cut_by_min_price_count = 0;
-// let mut cut_by_category_count = 0;
-
-// let mut total_products_count = 0;
-// let mut used_products_count = 0;
-
-// let now = now!();
-
-// for product in products.iter_mut() {
-// total_products_count += 1;
-// // Filter by category.
-// let name = Category::name_from_text(&product.category);
-// // Inc not selected categories.
-// if selected_categories.get(&name).is_none() {
-// cut_by_category_count += 1;
-// match new_categories.get_mut(&name) {
-// Some(category) => {
-// category.products_qtd += 1;
-// }
-// None => {
-// new_categories.insert(name, Category::new(&product.category, 1, false));
-// }
-// }
-// continue;
-// }
-// // Inc selected categories.
-// match new_categories.get_mut(&name) {
-// Some(category) => {
-// category.products_qtd += 1;
-// }
-// None => {
-// new_categories.insert(name, Category::new(&product.category, 1, true));
-// }
-// }
-// // Filter by min price.
-// if product.price_sale < filter.min_price {
-// cut_by_min_price_count += 1;
-// continue;
-// }
-// // Filter by max price.
-// if product.price_sale > filter.max_price {
-// cut_by_max_price_count += 1;
-// continue;
-// }
-// // Used products count.
-// used_products_count += 1;
-// // Min price.
-// if product.price_sale < min_price {
-// min_price = product.price_sale;
-// }
-// // Max price.
-// if product.price_sale > max_price {
-// max_price = product.price_sale;
-// }
-
-// let db_product = Product::get_one(&conn, &product.code);
-// // New product.
-// if db_product.is_none() {
-// product.created_at = now;
-// product.changed_at = now;
-// product.save(&conn);
-// info!("New product {}", product.code);
-// }
-// // Existing product.
-// else {
-// let db_product = db_product.unwrap();
-// // Product is older.
-// if product.timestamp <= db_product.timestamp {
-// warn!("Product {} have a timestamp older or equal, current product: {}, pretended new product: {}", product.code, db_product.timestamp, product.timestamp);
-// continue;
-// }
-// // Product changed.
-// if product != &db_product {
-// // Save product on history and update product.
-// let tx = conn.transaction().unwrap();
-// // Save on history.
-// db_product.save_history(&tx);
-// // Update product.
-// product.created_at = db_product.created_at;
-// product.changed_at = now;
-// product.zunka_product_id = db_product.zunka_product_id;
-// product.update(&tx);
-// // Update zunkasite product.
-// // todo
-// tx.commit().unwrap();
-// info!("Product {} updated", product.code);
-// }
-// }
-// }
-// info!(
-// "Using {} products from {}",
-// used_products_count, total_products_count
-// );
-// if min_price != u32::MAX {
-// info!("Min price: {}", formated_price_from_u32(min_price));
-// }
-// if max_price != u32::MIN {
-// info!("Max price: {}", formated_price_from_u32(max_price));
-// }
-// info!(
-// "Products cutted by min price({}): {}",
-// formated_price_from_u32(filter.min_price),
-// cut_by_min_price_count
-// );
-// info!(
-// "Products cutted by max price({}): {}",
-// formated_price_from_u32(filter.max_price),
-// cut_by_max_price_count
-// );
-// info!(
-// "Products cutted by categories filter: {}",
-// cut_by_category_count
-// );
-// info!(
-// "Using {} categories from {}",
-// selected_categories.len(),
-// new_categories.len()
-// );
-// new_categories
-// }
 
 // Formated price from u32.
 fn formated_price_from_u32(num: u32) -> String {
