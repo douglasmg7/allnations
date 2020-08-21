@@ -1,6 +1,6 @@
 use category::Category;
 use chrono::{FixedOffset, Utc};
-use log::{error, info};
+use log::{debug, error, info};
 use product::Product;
 use std::collections::{HashMap, HashSet};
 use std::panic;
@@ -94,12 +94,19 @@ pub fn run<T: std::io::Read>(
         }
     }
 
-    println!("Total products: {}", products.len());
-    println!("Used products: {}", products_in_use_count);
-    println!("Min price products: {}", formated_price_from_u32(min_price));
-    println!("Max price products: {}", formated_price_from_u32(max_price));
-    println!("Total category: {}", categories.len());
-    println!("Selected categories: {}", selected_categories.len());
+    info!("**********  Resume  **********");
+    info!("     Total products: {}", products.len());
+    info!("      Used products: {}", products_in_use_count);
+    info!(
+        " Min price products: {}",
+        formated_price_from_u32(min_price)
+    );
+    info!(
+        " Max price products: {}",
+        formated_price_from_u32(max_price)
+    );
+    info!("     Total category: {}", categories.len());
+    info!("Selected categories: {}", selected_categories.len());
 
     Ok(())
 }
@@ -107,9 +114,11 @@ pub fn run<T: std::io::Read>(
 /// Proccess products.
 pub fn process_products(products: &mut Vec<Product>, conn: &mut rusqlite::Connection) {
     let mut total_count = 0;
-    let mut changed_count = 0;
+    let mut changed_new_timestamp_count = 0;
+    let mut changed_same_timestamp_count = 0;
     let mut new_count = 0;
     let mut old_count = 0;
+    let mut not_changed_count = 0;
 
     let now = now!();
 
@@ -128,35 +137,47 @@ pub fn process_products(products: &mut Vec<Product>, conn: &mut rusqlite::Connec
         // Existing product.
         else {
             let db_product = db_product.unwrap();
+            // Same product.
+            if product == &db_product {
+                not_changed_count += 1;
+                continue;
+            }
             // Product is older.
-            if product.timestamp <= db_product.timestamp {
+            if product.timestamp < db_product.timestamp {
                 old_count += 1;
                 // warn!("Product {} have a timestamp older or equal, current product: {}, pretended new product: {}", product.code, db_product.timestamp, product.timestamp);
                 continue;
             }
             // Product changed.
-            if product != &db_product {
-                // Save product on history and update product.
-                let tx = conn.transaction().unwrap();
-                // Save on history.
-                db_product.save_history(&tx);
-                // Update product.
-                product.created_at = db_product.created_at;
-                product.changed_at = now;
-                product.zunka_product_id = db_product.zunka_product_id;
-                product.update(&tx);
-                // Update zunkasite product.
-                // todo
-                tx.commit().unwrap();
-                changed_count += 1;
-                // info!("Product {} updated", product.code);
+            if product.timestamp == db_product.timestamp {
+                let diff = product.diff(&db_product);
+                if diff.len() != 0 {
+                    debug!("Diff:\n{}", diff);
+                }
+                changed_same_timestamp_count += 1;
+            } else {
+                changed_new_timestamp_count += 1;
             }
+            let tx = conn.transaction().unwrap();
+            // Save on history.
+            db_product.save_history(&tx);
+            // Update product.
+            product.created_at = db_product.created_at.clone();
+            product.changed_at = now.clone();
+            product.zunka_product_id = db_product.zunka_product_id.clone();
+            product.update(&tx);
+            tx.commit().unwrap();
+            // todo - Update zunkasite product.
+            // Product same timestamp.
         }
     }
-    info!("Total products processed: {}", total_count);
-    info!("New products: {}", new_count);
-    info!("Changed products: {}", changed_count);
-    info!("Old products: {}", old_count);
+    info!("**********  Products  **********");
+    info!("              Processed: {}", total_count);
+    info!("                    New: {}", new_count);
+    info!(" Changed, new timestamp: {}", changed_new_timestamp_count);
+    info!("Changed, same timestamp: {}", changed_same_timestamp_count);
+    info!("          Old timestamp: {}", old_count);
+    info!("            Not changed: {}", not_changed_count);
 }
 
 // Formated price from u32.
@@ -164,19 +185,19 @@ fn formated_price_from_u32(num: u32) -> String {
     let s = num.to_string().chars().rev().collect::<String>();
     let mut result = String::new();
     for (i, c) in s.char_indices() {
-        result.push(c);
         match i {
-            1 => {
+            2 => {
                 result.push('.');
             }
-            4 => {
+            5 => {
                 result.push(',');
             }
-            7 => {
+            8 => {
                 result.push(',');
             }
             _ => {}
         }
+        result.push(c);
     }
     match result.len() {
         1 => {
@@ -200,6 +221,7 @@ mod test {
         assert_eq!(super::formated_price_from_u32(1), "R$ 0.01");
         assert_eq!(super::formated_price_from_u32(12), "R$ 0.12");
         assert_eq!(super::formated_price_from_u32(123), "R$ 1.23");
+        assert_eq!(super::formated_price_from_u32(23456789), "R$ 234,567.89");
         assert_eq!(super::formated_price_from_u32(123456789), "R$ 1,234,567.89");
     }
 

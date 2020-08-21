@@ -307,6 +307,102 @@ impl Product {
         }
         products
     }
+
+    // Differences.
+    pub fn diff(&self, other: &Self) -> String {
+        let mut diff = String::new();
+        if self.zunka_product_id != other.zunka_product_id {
+            diff.push_str(&format!("zunka_product_id\n\t  self: {}\n\t other: {}\n", self.zunka_product_id, other.zunka_product_id));
+        }
+        if self.code != other.code {
+            diff.push_str(&format!("code\n\t  self: {}\n\t other: {}\n", self.code, other.code));
+        }
+        if self.description != other.description {
+            diff.push_str(&format!("description\n\t  self: {}\n\t other: {}\n", self.description, other.description));
+        }
+        if self.timestamp != other.timestamp {
+            diff.push_str(&format!("timestamp\n\t  self: {}\n\t other: {}\n", self.timestamp, other.timestamp));
+        }
+        if self.department != other.department {
+            diff.push_str(&format!("department\n\t  self: {}\n\t other: {}\n", self.department, other.department));
+        }
+        if self.category != other.category {
+            diff.push_str(&format!("category\n\t  self: {}\n\t other: {}\n", self.category, other.category));
+        }
+        if self.sub_category != other.sub_category {
+            diff.push_str(&format!("sub_category\n\t  self: {}\n\t other: {}\n", self.sub_category, other.sub_category));
+        }
+        if self.maker != other.maker {
+            diff.push_str(&format!("maker\n\t  self: {}\n\t other: {}\n", self.maker, other.maker));
+        }
+        if self.technical_description != other.technical_description {
+            diff.push_str(&format!("technical_description\n\t  self: {}\n\t other: {}\n", self.technical_description, other.technical_description));
+        }
+        if self.url_image != other.url_image {
+            diff.push_str(&format!("url_image\n\t  self: {}\n\t other: {}\n", self.url_image, other.url_image));
+        }
+        if self.part_number != other.part_number {
+            diff.push_str(&format!("part_number\n\t  self: {}\n\t other: {}\n", self.part_number, other.part_number));
+        }
+        if self.ean != other.ean {
+            diff.push_str(&format!("ean\n\t  self: {}\n\t other: {}\n", self.ean, other.ean));
+        }
+        if self.ncm != other.ncm {
+            diff.push_str(&format!("ncm\n\t  self: {}\n\t other: {}\n", self.ncm, other.ncm));
+        }
+        if self.price_sale != other.price_sale {
+            diff.push_str(&format!("price_sale\n\t  self: {}\n\t other: {}\n", self.price_sale, other.price_sale));
+        }
+        if self.price_without_st != other.price_without_st {
+            diff.push_str(&format!("price_without_st\n\t  self: {}\n\t other: {}\n", self.price_without_st, other.price_without_st));
+        }
+        if self.icms_st_taxation != other.icms_st_taxation {
+            diff.push_str(&format!("icms_st_taxation\n\t  self: {}\n\t other: {}\n", self.icms_st_taxation, other.icms_st_taxation));
+        }
+        if self.warranty_month != other.warranty_month {
+            diff.push_str(&format!("warranty_month\n\t  self: {}\n\t other: {}\n", self.warranty_month, other.warranty_month));
+        }
+        if self.length_mm != other.length_mm {
+            diff.push_str(&format!("length_mm\n\t  self: {}\n\t other: {}\n", self.length_mm, other.length_mm));
+        }
+        if self.width_mm != other.width_mm {
+            diff.push_str(&format!("width_mm\n\t  self: {}\n\t other: {}\n", self.width_mm, other.width_mm));
+        }
+        if self.height_mm != other.height_mm {
+            diff.push_str(&format!("height_mm\n\t  self: {}\n\t other: {}\n", self.height_mm, other.height_mm));
+        }
+        if self.weight_g != other.weight_g {
+            diff.push_str(&format!("weight_g\n\t  self: {}\n\t other: {}\n", self.weight_g, other.weight_g));
+        }
+        if self.active != other.active {
+            diff.push_str(&format!("active\n\t  self: {}\n\t other: {}\n", self.active, other.active));
+        }
+        if self.availability != other.availability {
+            diff.push_str(&format!("availability\n\t  self: {}\n\t other: {}\n", self.availability, other.availability));
+        }
+        if self.origin != other.origin {
+            diff.push_str(&format!("origin\n\t  self: {}\n\t other: {}\n", self.origin, other.origin));
+        }
+        if self.stock_origin != other.stock_origin {
+            diff.push_str(&format!("stock_origin\n\t  self: {}\n\t other: {}\n", self.stock_origin, other.stock_origin));
+        }
+        if self.stock_qty != other.stock_qty {
+            diff.push_str(&format!("stock_qty\n\t  self: {}\n\t other: {}\n", self.stock_qty, other.stock_qty));
+        }
+        if self.created_at != other.created_at {
+            diff.push_str(&format!("created_at\n\t  self: {}\n\t other: {}\n", self.created_at, other.created_at));
+        }
+        if self.changed_at != other.changed_at {
+            diff.push_str(&format!("changed_at\n\t  self: {}\n\t other: {}\n", self.changed_at, other.changed_at));
+        }
+        if self.checked_at != other.checked_at {
+            diff.push_str(&format!("checked_at\n\t  self: {}\n\t other: {}\n", self.checked_at, other.checked_at));
+        }
+        if self.removed_at != other.removed_at {
+            diff.push_str(&format!("removed_at\n\t  self: {}\n\t other: {}\n", self.removed_at, other.removed_at));
+        }
+        diff
+    }
 }
 
 impl fmt::Display for Product {
@@ -357,10 +453,10 @@ impl PartialEq for Product {
             && self.origin == other.origin
             && self.stock_origin == other.stock_origin
             && self.stock_qty == other.stock_qty
-            && self.created_at.to_rfc3339_opts(SecondsFormat::Secs, false) == other.created_at.to_rfc3339_opts(SecondsFormat::Secs, false)
-            && self.changed_at.to_rfc3339_opts(SecondsFormat::Secs, false) == other.changed_at.to_rfc3339_opts(SecondsFormat::Secs, false)
-            && self.checked_at.to_rfc3339_opts(SecondsFormat::Secs, false) == other.checked_at.to_rfc3339_opts(SecondsFormat::Secs, false)
-            && self.removed_at.to_rfc3339_opts(SecondsFormat::Secs, false) == other.removed_at.to_rfc3339_opts(SecondsFormat::Secs, false)
+            // && self.created_at.to_rfc3339_opts(SecondsFormat::Secs, false) == other.created_at.to_rfc3339_opts(SecondsFormat::Secs, false)
+            // && self.changed_at.to_rfc3339_opts(SecondsFormat::Secs, false) == other.changed_at.to_rfc3339_opts(SecondsFormat::Secs, false)
+            // && self.checked_at.to_rfc3339_opts(SecondsFormat::Secs, false) == other.checked_at.to_rfc3339_opts(SecondsFormat::Secs, false)
+            // && self.removed_at.to_rfc3339_opts(SecondsFormat::Secs, false) == other.removed_at.to_rfc3339_opts(SecondsFormat::Secs, false)
     }
 }
 
