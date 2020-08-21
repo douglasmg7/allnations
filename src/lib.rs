@@ -1,6 +1,6 @@
 use category::Category;
 use chrono::{FixedOffset, Utc};
-use log::{error, info, warn};
+use log::{error, info};
 use product::Product;
 use std::collections::{HashMap, HashSet};
 use std::panic;
@@ -95,9 +95,9 @@ pub fn run<T: std::io::Read>(
     }
 
     println!("Total products: {}", products.len());
+    println!("Used products: {}", products_in_use_count);
     println!("Min price products: {}", formated_price_from_u32(min_price));
     println!("Max price products: {}", formated_price_from_u32(max_price));
-    println!("Used products: {}", products_in_use_count);
     println!("Total category: {}", categories.len());
     println!("Selected categories: {}", selected_categories.len());
 
@@ -123,7 +123,7 @@ pub fn process_products(products: &mut Vec<Product>, conn: &mut rusqlite::Connec
             product.changed_at = now;
             product.save(&conn);
             new_count += 1;
-            info!("New product {}", product.code);
+        // info!("New product {}", product.code);
         }
         // Existing product.
         else {
@@ -131,7 +131,7 @@ pub fn process_products(products: &mut Vec<Product>, conn: &mut rusqlite::Connec
             // Product is older.
             if product.timestamp <= db_product.timestamp {
                 old_count += 1;
-                warn!("Product {} have a timestamp older or equal, current product: {}, pretended new product: {}", product.code, db_product.timestamp, product.timestamp);
+                // warn!("Product {} have a timestamp older or equal, current product: {}, pretended new product: {}", product.code, db_product.timestamp, product.timestamp);
                 continue;
             }
             // Product changed.
@@ -149,14 +149,14 @@ pub fn process_products(products: &mut Vec<Product>, conn: &mut rusqlite::Connec
                 // todo
                 tx.commit().unwrap();
                 changed_count += 1;
-                info!("Product {} updated", product.code);
+                // info!("Product {} updated", product.code);
             }
         }
     }
+    info!("Total products processed: {}", total_count);
     info!("New products: {}", new_count);
     info!("Changed products: {}", changed_count);
     info!("Old products: {}", old_count);
-    info!("Total products: {}", total_count);
 }
 
 // /// Proccess products.
