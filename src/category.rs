@@ -12,8 +12,8 @@ impl Category {
     pub fn new(text: &str, quantity: i32, selected: bool) -> Category {
         let text: Vec<_> = text.split_whitespace().collect();
         Category {
-            name: text.join("_").to_uppercase(),
-            text: text.join(" "),
+            name: text.join("_").to_lowercase(),
+            text: text.join(" ").to_lowercase(),
             products_qty: quantity,
             selected: selected,
         }
@@ -24,7 +24,7 @@ impl Category {
         text.split_whitespace()
             .collect::<Vec<&str>>()
             .join("_")
-            .to_uppercase()
+            .to_lowercase()
     }
 
     // Insert on db.
@@ -124,14 +124,14 @@ mod test {
     #[test]
     fn new() {
         let cat = super::Category::new(" SuPER   CATEgory a   ", 32, true);
-        assert_eq!(cat.name, "SUPER_CATEGORY_A");
-        assert_eq!(cat.text, "SuPER CATEgory a");
+        assert_eq!(cat.name, "super_category_a");
+        assert_eq!(cat.text, "super category a");
     }
 
     #[test]
     fn name_from_text() {
         let cat = super::Category::name_from_text(" SuPER   CATEgory a   ");
-        assert_eq!(cat, "SUPER_CATEGORY_A");
+        assert_eq!(cat, "super_category_a");
     }
 
     #[test]
