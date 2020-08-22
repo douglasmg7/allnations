@@ -11,7 +11,9 @@ availability, origin, stock_origin, stock_qty, created_at, changed_at, removed_a
 
 // const ZERO_TIME: &str = "0001-01-01T03:00:00-03:00";
 lazy_static::lazy_static! {
-    pub static ref ZERO_TIME: DateTime<FixedOffset> = DateTime::parse_from_rfc3339("0001-01-01T03:00:00-03:00").unwrap();
+    pub static ref ZERO_TIME: DateTime<FixedOffset> = DateTime::parse_from_rfc3339("0001-01-01T00:00:00-00:00")
+        .unwrap()
+        .with_timezone(&FixedOffset::west(3 * 3600));
 
     // Insert.
     static ref  PRODUCT_FIELDS_INSERT: String = PRODUCT_FIELDS
