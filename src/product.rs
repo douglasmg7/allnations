@@ -218,15 +218,15 @@ impl Product {
                         product.timestamp = chrono::DateTime::parse_from_rfc3339(&text)
                             .expect(&format!("Invalid TIMESTAMP: {}", text));
                     }
-                    "DEPARTAMENTO" => product.department = text.clone(),
-                    "CATEGORIA" => product.category = text.clone(),
-                    "SUBCATEGORIA" => product.sub_category = text.clone(),
-                    "FABRICANTE" => product.maker = text.clone(),
-                    "CODIGO" => product.code = text.clone(),
-                    "DESCRICAO" => product.description = text.clone(),
-                    "DESCRTEC" => product.technical_description = text.clone(),
-                    "PARTNUMBER" => product.part_number = text.clone(),
-                    "EAN" => product.ean = text.clone(),
+                    "DEPARTAMENTO" => product.department = super::sanitize_whitespace_uppercase!(text),
+                    "CATEGORIA" => product.category = super::sanitize_whitespace_uppercase!(text),
+                    "SUBCATEGORIA" => product.sub_category = super::sanitize_whitespace_uppercase!(text),
+                    "FABRICANTE" => product.maker = super::sanitize_whitespace_uppercase!(text),
+                    "CODIGO" => product.code = super::sanitize_whitespace!(text),
+                    "DESCRICAO" => product.description = super::sanitize_whitespace_uppercase!(text),
+                    "DESCRTEC" => product.technical_description = text.trim().to_string(),
+                    "PARTNUMBER" => product.part_number = super::sanitize_whitespace!(text),
+                    "EAN" => product.ean = super::sanitize_whitespace!(text),
                     "GARANTIA" => {
                         product.warranty_month = text
                             .parse::<u32>()
@@ -253,10 +253,10 @@ impl Product {
                             .expect(&format!("Invalid PRECOSEMST: {}", text)))
                             as u32;
                     }
-                    "DISPONIVEL" => product.availability = text == "1",
-                    "URLFOTOPRODUTO" => product.url_image = text.clone(),
-                    "ESTOQUE" => product.stock_origin = text.clone(),
-                    "NCM" => product.ncm = text.clone(),
+                    "DISPONIVEL" => product.availability = text.trim() == "1",
+                    "URLFOTOPRODUTO" => product.url_image = text.trim().to_string(),
+                    "ESTOQUE" => product.stock_origin = text.trim().to_uppercase().to_string(),
+                    "NCM" => product.ncm = text.trim().to_string(),
                     "LARGURA" => {
                         product.width_mm = (1000.0
                             * text
@@ -278,9 +278,9 @@ impl Product {
                             .expect(&format!("Invalid PROFUNDIDADE: {}", text)))
                             as u32;
                     }
-                    "ATIVO" => product.active = text == "1",
-                    "SUBSTTRIBUTARIA" => product.icms_st_taxation = text == "1",
-                    "ORIGEMPRODUTO" => product.origin = text.clone(),
+                    "ATIVO" => product.active = text.trim() == "1",
+                    "SUBSTTRIBUTARIA" => product.icms_st_taxation = text.trim() == "1",
+                    "ORIGEMPRODUTO" => product.origin = super::sanitize_whitespace_uppercase!(text),
                     "ESTOQUEDISPONIVEL" => {
                         product.stock_qty = (text
                             .parse::<f32>()

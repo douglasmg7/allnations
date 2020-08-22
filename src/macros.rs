@@ -186,6 +186,26 @@ macro_rules! category_from_row {
     };
 }
 
+// Remove lead spaces, trail spaces, duplicated spaces and uppercase everything.
+#[macro_export]
+macro_rules! sanitize_whitespace_uppercase {
+    ($text: ident) => {
+        $text
+            .split_whitespace()
+            .collect::<Vec<&str>>()
+            .join(" ")
+            .to_uppercase()
+    };
+}
+
+// Remove lead spaces, trail spaces, duplicated spaces.
+#[macro_export]
+macro_rules! sanitize_whitespace {
+    ($text: ident) => {
+        $text.split_whitespace().collect::<Vec<&str>>().join(" ")
+    };
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // UTIL
 ///////////////////////////////////////////////////////////////////////////////
