@@ -12,7 +12,6 @@ CREATE TABLE IF NOT EXISTS param (
 -- Categories.
 CREATE TABLE IF NOT EXISTS category (
 	name                    TEXT PRIMARY KEY,	-- Name without space.
-	text                    TEXT NOT NULL,
 	products_qty            INTEGER NOT NULL,
 	selected                BOOLEAN NOT NULL
 );

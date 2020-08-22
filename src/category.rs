@@ -2,41 +2,41 @@ use std::fmt;
 
 #[derive(Debug, PartialEq)]
 pub struct Category {
-    pub name: String, // Text without space.
-    pub text: String,
+    pub name: String,
     pub products_qty: i32,
     pub selected: bool,
 }
 
 impl Category {
-    pub fn new(text: &str, quantity: i32, selected: bool) -> Category {
-        let text: Vec<_> = text.split_whitespace().collect();
+    pub fn new(name: &str, quantity: i32, selected: bool) -> Category {
+        // let text: Vec<_> = text.split_whitespace().collect();
         Category {
-            name: text.join("_").to_lowercase(),
-            text: text.join(" ").to_lowercase(),
+            name: name.to_string(),
+            // name: text.join("_").to_lowercase(),
+            // text: text.join(" ").to_lowercase(),
             products_qty: quantity,
             selected: selected,
         }
     }
 
-    // Create category name from category text.
-    pub fn name_from_text(text: &str) -> String {
+    // Sanitizer name.
+    pub fn sanitizer_name(text: &str) -> String {
         text.split_whitespace()
             .collect::<Vec<&str>>()
-            .join("_")
-            .to_lowercase()
+            .join(" ")
+            .to_uppercase()
     }
 
     // Insert on db.
     pub fn save(&self, conn: &rusqlite::Connection) {
-        let sql = "INSERT INTO category (name, text, products_qty, selected) VALUES (:name, :text, :products_qty, :selected)";
+        let sql = "INSERT INTO category (name, products_qty, selected) VALUES (:name, :products_qty, :selected)";
         let mut stmt = conn.prepare(sql).unwrap();
         super::stmt_execute_named_category!(stmt, self);
     }
 
     // Insert or update on db.
     pub fn save_or_update_only_products_qty(&self, conn: &rusqlite::Connection) {
-        let sql = "INSERT INTO category (name, text, products_qty, selected) VALUES (:name, :text, :products_qty, :selected)\
+        let sql = "INSERT INTO category (name, products_qty, selected) VALUES (:name, :products_qty, :selected)\
                    ON CONFLICT(name) DO UPDATE SET products_qty=excluded.products_qty";
         let mut stmt = conn.prepare(sql).unwrap();
         super::stmt_execute_named_category!(stmt, self);
@@ -44,7 +44,7 @@ impl Category {
 
     // Update on db.
     pub fn update(&self, conn: &rusqlite::Connection) {
-        let sql = r#"UPDATE category SET text = :text, products_qty = :products_qty, selected = :selected WHERE name = :name"#;
+        let sql = r#"UPDATE category SET products_qty = :products_qty, selected = :selected WHERE name = :name"#;
         let mut stmt = conn.prepare(sql).unwrap();
         super::stmt_execute_named_category!(stmt, self);
     }
@@ -58,7 +58,7 @@ impl Category {
     // Get one from db.
     pub fn get_one(conn: &rusqlite::Connection, name: &str) -> Option<Category> {
         let mut stmt = conn
-            .prepare("SELECT name, text, products_qty, selected FROM category WHERE name = :name")
+            .prepare("SELECT name, products_qty, selected FROM category WHERE name = :name")
             .unwrap();
         let mut rows = stmt.query_named(&[(":name", &name)]).unwrap();
 
@@ -72,7 +72,7 @@ impl Category {
     // Get all.
     pub fn get_all(conn: &rusqlite::Connection) -> Vec<Category> {
         let mut stmt = conn
-            .prepare("SELECT name, text, products_qty, selected FROM category")
+            .prepare("SELECT name, products_qty, selected FROM category")
             .unwrap();
         let categories_iter = stmt
             .query_map(rusqlite::params![], |row| {
@@ -89,9 +89,7 @@ impl Category {
     // Get all selected.
     pub fn get_all_selected(conn: &rusqlite::Connection) -> Vec<Category> {
         let mut stmt = conn
-            .prepare(
-                "SELECT name, text, products_qty, selected FROM category WHERE selected = true",
-            )
+            .prepare("SELECT name, products_qty, selected FROM category WHERE selected = true")
             .unwrap();
         let categories_iter = stmt
             .query_map(rusqlite::params![], |row| {
@@ -110,8 +108,8 @@ impl fmt::Display for Category {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(
             f,
-            "[category]\n\tname: {}\n\ttext: {}\n\tproduct_qty: {}\n\tselected: {}",
-            self.name, self.text, self.products_qty, self.selected,
+            "[category]\n\tname: {}\n\tproduct_qty: {}\n\tselected: {}",
+            self.name, self.products_qty, self.selected,
         )
     }
 }
@@ -123,15 +121,12 @@ mod test {
 
     #[test]
     fn new() {
-        let cat = super::Category::new(" SuPER   CATEgory a   ", 32, true);
-        assert_eq!(cat.name, "super_category_a");
-        assert_eq!(cat.text, "super category a");
-    }
-
-    #[test]
-    fn name_from_text() {
-        let cat = super::Category::name_from_text(" SuPER   CATEgory a   ");
-        assert_eq!(cat, "super_category_a");
+        let cat = super::Category::new(
+            &super::Category::sanitizer_name(" SuPER   CATEgory a   "),
+            32,
+            true,
+        );
+        assert_eq!(cat.name, "SUPER CATEGORY A");
     }
 
     #[test]
@@ -142,8 +137,8 @@ mod test {
         Category::remove_all(&conn);
 
         // Insert.
-        Category::new("Laptops", 2, true).save(&conn);
-        Category::new("Computadores", 4, true).save(&conn);
+        Category::new("LAPTOPS", 2, true).save(&conn);
+        Category::new("COMPUTADORES", 4, true).save(&conn);
 
         // Get all.
         let categories = Category::get_all(&conn);
@@ -151,7 +146,7 @@ mod test {
 
         // Insert or update.
         // Must insert.
-        let mut category = Category::new("Impressoras", 5, true);
+        let mut category = Category::new("IMPRESSORAS", 5, true);
         category.save_or_update_only_products_qty(&conn);
         let saved_category = Category::get_one(&conn, &category.name).unwrap();
         assert_eq!(saved_category, category);
@@ -160,13 +155,12 @@ mod test {
         category.selected = false;
         category.save_or_update_only_products_qty(&conn);
         let saved_category = Category::get_one(&conn, &category.name).unwrap();
-        assert_eq!(saved_category.text, category.text);
         assert_eq!(saved_category.products_qty, category.products_qty);
         // Must not update selected.
         assert_eq!(saved_category.selected, true);
 
         // Update.
-        let mut category = Category::new("hds", 20, false);
+        let mut category = Category::new("HDS", 20, false);
         category.save(&conn);
         category.products_qty = 10;
         category.selected = true;

@@ -53,17 +53,19 @@ pub fn run<T: std::io::Read>(
     let mut min_price = u32::MAX;
     let mut max_price = u32::MIN;
     for product in products.iter() {
-        let name = Category::name_from_text(&product.category);
-        match categories.get_mut(&name) {
+        match categories.get_mut(&product.category) {
             Some(category) => {
                 category.products_qty += 1;
             }
             None => {
-                categories.insert(name.clone(), Category::new(&product.category, 0, false));
+                categories.insert(
+                    product.category.clone(),
+                    Category::new(&product.category, 1, false),
+                );
             }
         }
         // Products in use.
-        if selected_categories.contains(&name) {
+        if selected_categories.contains(&product.category) {
             products_in_use_count += 1;
         }
         // Min price.

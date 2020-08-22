@@ -165,7 +165,6 @@ macro_rules! stmt_execute_named_category {
         $stmt
             .execute_named(&[
                 (":name", &$category.name),
-                (":text", &$category.text),
                 (":products_qty", &$category.products_qty),
                 (":selected", &$category.selected),
             ])
@@ -179,9 +178,8 @@ macro_rules! category_from_row {
     ($row: ident) => {
         Category {
             name: $row.get(0).unwrap(),
-            text: $row.get(1).unwrap(),
-            products_qty: $row.get(2).unwrap(),
-            selected: $row.get(3).unwrap(),
+            products_qty: $row.get(1).unwrap(),
+            selected: $row.get(2).unwrap(),
         }
     };
 }
