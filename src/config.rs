@@ -14,7 +14,7 @@ pub struct Config {
 impl Config {
     pub fn new() -> Config {
         let mut db_filename =
-            std::env::var("ZUNKA_ALLNATIONS_DB").expect("Environment variable ZUNKA_ALLNATIONS_DB");
+            std::env::var("ALLNATIONS_DB").expect("Environment variable ALLNATIONS_DB");
         let run_mode: super::RunMode;
 
         // Set run mode and db filename.

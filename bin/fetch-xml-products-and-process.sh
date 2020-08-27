@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 
-./fetch-xml-products.sh
-./process-xml-products.sh
+$GS/allnations/bin/fetch-xml-products.sh
+$GS/allnations/bin/process-xml-products.sh

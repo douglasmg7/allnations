@@ -16,9 +16,9 @@ if [ ! -f $FILE ]; then
 fi
 
 if [[ $RUN_MODE == production ]]; then
-    RUN_MODE=production allnations < $FILE
+    RUN_MODE=production allnations < $FILE | tee -a $ZUNKAPATH/log/allnations/allnations.log
 else
-    cargo run < $FILE
+    cargo run < $FILE | tee -a $ZUNKAPATH/log/allnations/allnations.log 
 fi
 
 # Remove file if successful processed.
