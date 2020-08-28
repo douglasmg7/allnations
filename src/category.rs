@@ -130,6 +130,7 @@ mod test {
     }
 
     #[test]
+    #[ignore]
     fn crud() {
         let conn = rusqlite::Connection::open(&Config::new().db_filename).unwrap();
 

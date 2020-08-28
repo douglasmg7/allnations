@@ -7,10 +7,10 @@ if [ -z "$ZUNKAPATH" ]; then
 fi
 
 # ZUNKA_ALLNATIONS_DB not defined.
-if [ -z "$ZUNKA_ALLNATIONS_DB" ]; then
-	printf "error: ZUNKA_ALLNATIONS_DB not defined.\n" >&2
+if [ -z "$ALLNATIONS_DB" ]; then
+	printf "error: ALLNATIONS_DB not defined.\n" >&2
 	exit 1 
 fi
 
-printf "Removing db %s/%s\n" $ZUNKA_ALLNATIONS_DB
-rm $ZUNKA_ALLNATIONS_DB
+printf "Removing db %s/%s\n" $ALLNATIONS_DB
+rm $ALLNATIONS_DB

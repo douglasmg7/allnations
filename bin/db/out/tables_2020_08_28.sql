@@ -3,6 +3,19 @@
 -- not working, reset to off when back to db
 pragma foreign_keys = on;
 
+-- Parameters.
+CREATE TABLE IF NOT EXISTS param (
+	name                    TEXT PRIMARY KEY,	-- Name without space.
+	value                   TEXT
+);
+
+-- Categories.
+CREATE TABLE IF NOT EXISTS category (
+	name                    TEXT PRIMARY KEY,	-- Name without space.
+	products_qty            INTEGER NOT NULL,
+	selected                BOOLEAN NOT NULL
+);
+
 -- Products.
 CREATE TABLE IF NOT EXISTS product (
     zunka_product_id		TEXT DEFAULT "",

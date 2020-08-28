@@ -232,7 +232,8 @@ mod test {
 
     #[test]
     fn run() {
-        use super::{category::Category, config::Config, logger, product::Product};
+        // use super::{category::Category, config::Config, logger, product::Product};
+        use super::{config::Config, logger, product::Product};
         use std::{fs::File, io::BufReader};
 
         // Config.
@@ -245,13 +246,13 @@ mod test {
         logger::init(&config.run_mode).unwrap();
 
         // Clean db.
-        Category::remove_all(&conn);
+        // Category::remove_all(&conn);
         Product::remove_all(&conn);
         Product::remove_all_history(&conn);
 
         // Add category to use.
-        let category_to_use = Category::new("ARMAZENAMENTO", 2, true);
-        category_to_use.save(&conn);
+        // let category_to_use = Category::new("ARMAZENAMENTO", 2, true);
+        // category_to_use.save(&conn);
 
         let mut path_a = std::env::current_dir().unwrap();
         path_a.push("xml");
