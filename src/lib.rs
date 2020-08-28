@@ -1,8 +1,8 @@
-use category::Category;
+// use category::Category;
 use chrono::{FixedOffset, Utc};
 use log::{debug, error, info};
 use product::Product;
-use std::collections::{HashMap, HashSet};
+// use std::collections::{HashMap, HashSet};
 use std::panic;
 
 pub mod category;
@@ -39,76 +39,76 @@ pub fn run<T: std::io::Read>(
     // Process products.
     process_products(&mut products, &mut conn);
 
-    // Selected categories.
-    let selected_categories_array = Category::get_all_selected(&conn);
-    let mut selected_categories = HashSet::new();
-    for category in selected_categories_array.iter() {
-        selected_categories.insert(category.name.clone());
-    }
+    // // Selected categories.
+    // let selected_categories_array = Category::get_all_selected(&conn);
+    // let mut selected_categories = HashSet::new();
+    // for category in selected_categories_array.iter() {
+    // selected_categories.insert(category.name.clone());
+    // }
 
-    // Create categories.
-    let mut categories = HashMap::<String, Category>::new();
-    let products = Product::get_all(&conn);
-    let mut products_in_use_count = 0;
-    let mut min_price = u32::MAX;
-    let mut max_price = u32::MIN;
-    for product in products.iter() {
-        match categories.get_mut(&product.category) {
-            Some(category) => {
-                category.products_qty += 1;
-            }
-            None => {
-                categories.insert(
-                    product.category.clone(),
-                    Category::new(&product.category, 1, false),
-                );
-            }
-        }
-        // Products in use.
-        if selected_categories.contains(&product.category) {
-            products_in_use_count += 1;
-        }
-        // Min price.
-        if product.price_sale < min_price {
-            min_price = product.price_sale;
-        }
+    // // Create categories.
+    // let mut categories = HashMap::<String, Category>::new();
+    // let products = Product::get_all(&conn);
+    // let mut products_in_use_count = 0;
+    // let mut min_price = u32::MAX;
+    // let mut max_price = u32::MIN;
+    // for product in products.iter() {
+    // match categories.get_mut(&product.category) {
+    // Some(category) => {
+    // category.products_qty += 1;
+    // }
+    // None => {
+    // categories.insert(
+    // product.category.clone(),
+    // Category::new(&product.category, 1, false),
+    // );
+    // }
+    // }
+    // // Products in use.
+    // if selected_categories.contains(&product.category) {
+    // products_in_use_count += 1;
+    // }
+    // // Min price.
+    // if product.price_sale < min_price {
+    // min_price = product.price_sale;
+    // }
 
-        // Max price.
-        if product.price_sale > max_price {
-            max_price = product.price_sale;
-        }
-    }
+    // // Max price.
+    // if product.price_sale > max_price {
+    // max_price = product.price_sale;
+    // }
+    // }
 
-    // Update categories.
-    for category in categories.values_mut() {
-        if selected_categories.contains(&category.name) {
-            category.selected = true;
-        }
-        match Category::get_one(&conn, &category.name) {
-            Some(db_category) => {
-                if db_category != *category {
-                    category.update(&conn);
-                }
-            }
-            None => {
-                category.save(&conn);
-            }
-        }
-    }
+    // // Update categories.
+    // for category in categories.values_mut() {
+    // if selected_categories.contains(&category.name) {
+    // category.selected = true;
+    // }
+    // match Category::get_one(&conn, &category.name) {
+    // Some(db_category) => {
+    // if db_category != *category {
+    // category.update(&conn);
+    // }
+    // }
+    // None => {
+    // category.save(&conn);
+    // }
+    // }
+    // }
 
-    info!("**********  Resume  **********");
-    info!("     Total products: {}", products.len());
-    info!("      Used products: {}", products_in_use_count);
-    info!(
-        " Min price products: {}",
-        formated_price_from_u32(min_price)
-    );
-    info!(
-        " Max price products: {}",
-        formated_price_from_u32(max_price)
-    );
-    info!("     Total category: {}", categories.len());
-    info!("Selected categories: {}", selected_categories.len());
+    // info!("**********  Resume  **********");
+    // info!("     Total products: {}", products.len());
+    // info!("      Used products: {}", products_in_use_count);
+    // info!(
+    // " Min price products: {}",
+    // formated_price_from_u32(min_price)
+    // );
+    // info!(
+    // " Max price products: {}",
+    // formated_price_from_u32(max_price)
+    // );
+    // info!("     Total category: {}", categories.len());
+    // info!("Selected categories: {}", selected_categories.len());
 
     Ok(())
 }
@@ -185,6 +185,7 @@ pub fn process_products(products: &mut Vec<Product>, conn: &mut rusqlite::Connec
 }
 
 // Formated price from u32.
+#[allow(dead_code)]
 fn formated_price_from_u32(num: u32) -> String {
     let s = num.to_string().chars().rev().collect::<String>();
     let mut result = String::new();
@@ -271,6 +272,6 @@ mod test {
         let product = Product::get_one(&conn, "0070495").unwrap();
         assert_eq!(product.price_sale, 207136);
         assert_eq!(Product::get_all_hsitory(&conn)[0].price_sale, 206136);
-        assert_eq!(Category::get_all(&conn).len(), 39);
+        // assert_eq!(Category::get_all(&conn).len(), 39);
     }
 }
