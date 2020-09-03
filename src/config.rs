@@ -7,6 +7,9 @@ pub struct Filter {
 
 pub struct Config {
     pub run_mode: super::RunMode,
+    pub zunkasite_host: String,
+    pub zunkasite_user: String,
+    pub zunkasite_pass: String,
     pub db_filename: String,
     pub filter: Filter,
 }
@@ -34,11 +37,31 @@ impl Config {
             }
         };
 
+        // Zunkasite crendentials.
+        let run_mode_sufix;
+        match run_mode {
+            super::RunMode::Prod() => {
+                run_mode_sufix = "PROD";
+            }
+            _ => {
+                run_mode_sufix = "DEV";
+            }
+        }
+        let zunkasite_host = std::env::var(format!("ZUNKASITE_HOST_{}", run_mode_sufix))
+            .expect("Environment variable ALLNATIONS_DB");
+        let zunkasite_user = std::env::var(format!("ZUNKASITE_USER_{}", run_mode_sufix))
+            .expect("Environment variable ALLNATIONS_DB");
+        let zunkasite_pass = std::env::var(format!("ZUNKASITE_PASS_{}", run_mode_sufix))
+            .expect("Environment variable ALLNATIONS_DB");
+
         // Check if db exist.
         std::fs::metadata(&db_filename).expect(&format!("Db file not exit: {}", db_filename));
 
         Config {
             run_mode: run_mode,
+            zunkasite_host: zunkasite_host,
+            zunkasite_user: zunkasite_user,
+            zunkasite_pass: zunkasite_pass,
             db_filename: db_filename,
             filter: Filter {
                 min_price: 1000 * 100,

@@ -10,6 +10,7 @@ pub mod config;
 pub mod logger;
 pub mod macros;
 pub mod product;
+pub mod zunkasite;
 
 pub enum RunMode {
     Prod(),
