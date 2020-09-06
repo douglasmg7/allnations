@@ -5,24 +5,26 @@ use std::collections::HashSet;
 // // use std::collections::HashMap;
 // use reqwest;
 
-// struct AllnationsProductsInfo {
-// zunka_site_id: String,
-// code: String,
-// dealer_price: i64,
-// dealer_product_active: bool,
-// stock: i32,
-// }
+#[derive(Deserialize, Serialize, Debug)]
+#[allow(non_snake_case)]
+struct ProductResponse {
+    dealerProductId: String,
+}
 
-#[allow(dead_code)]
-fn update_zunkasite_product(product: &Product, config: &Config) {
-    println!("product: {}", product);
-    println!("config: {}", config.db_filename);
+#[derive(Deserialize, Serialize, Debug)]
+#[allow(non_snake_case)]
+struct ProductUpdate {
+    storeProductId: String,
+    dealerProductActive: bool,
+    dealerProductPrice: f64,
+    storeProductQtd: u32,
 }
 
 #[allow(dead_code)]
-// #[tokio::main]
-async fn get_all_allnations_products(config: &Config) -> Result<(), Box<dyn std::error::Error>> {
-    let response = reqwest::Client::new()
+async fn get_all_allnations_products_codes_from_zunka(
+    config: &Config,
+) -> Result<HashSet<String>, Box<dyn std::error::Error>> {
+    let products_response = reqwest::Client::new()
         .get(&format!(
             "{}/setup/products/allnations",
             &config.zunkasite_host
@@ -30,97 +32,70 @@ async fn get_all_allnations_products(config: &Config) -> Result<(), Box<dyn std:
         .basic_auth(&config.zunkasite_user, Some(&config.zunkasite_pass))
         .send()
         .await
+        .unwrap()
+        .json::<Vec<ProductResponse>>()
+        .await
         .unwrap();
-    // .json()
-    // .unwrap();
-
-    println!("Status: {}", response.status());
-    let body = response.text().await.unwrap();
-    println!("Body:\n\n{}", body);
-
-    Ok(())
-}
-
-#[allow(dead_code)]
-async fn get_all_allnations_products_codes_from_zunka(
-) -> Result<HashSet<String>, Box<dyn std::error::Error>> {
-    // let response = reqwest::Client::new()
-    // .get(&format!(
-    // "{}/setup/products/allnations",
-    // &config.zunkasite_host
-    // ))
-    // .basic_auth(&config.zunkasite_user, Some(&config.zunkasite_pass))
-    // .send()
-    // .await
-    // .unwrap();
-    // // .json()
-    // // .unwrap();
-
-    // println!("Status: {}", response.status());
-    // let body = response.text().await.unwrap();
-
-    #[derive(Deserialize, Serialize, Debug)]
-    #[allow(non_snake_case)]
-    struct ProductTemp {
-        dealerProductId: String,
-    }
-
-    // impl Eq for Products {}
-    // Some JSON input data as a &str. Maybe this comes from the user.
-    let data = r#"
-        [
-            {   
-                "id":"5f50f2e711a5c24a18524d81",
-                "dealerProductId":"0072079",
-                "dealerProductActive":true,
-                "dealerProductPrice":3300,
-                "storeProductQtd":22
-            },
-            {
-                "id":"5f5228665cea0b08536459c0",
-                "dealerProductId":"0074532",
-                "dealerProductActive":true,
-                "dealerProductPrice":30,
-                "storeProductQtd":113
-            }
-        ]"#;
-
-    // Deserialize to vec product.
-    let products: Vec<ProductTemp> = serde_json::from_str(data).unwrap();
 
     let mut products_code = std::collections::HashSet::new();
 
-    for product in products.iter() {
+    for product in products_response.iter() {
         products_code.insert(product.dealerProductId.clone());
     }
-
-    // // Access parts of the data by indexing with square brackets.
-    // println!("p: {:?}", p);
-    // // Fisrt value.
-    // println!("p[0]: {}", v[0]);
-
-    // Dealer product id.
-    // println!("p[0].id: {}", p[0].dealerProductId);
-    // println!("Body:\n\n{}", body);
 
     Ok(products_code)
 }
 
-mod test {
-    // #[tokio::test(core_threads = 1)]
-    #[tokio::test]
-    #[ignore]
-    async fn test_get_all_allnations_products() {
-        let config = super::super::config::Config::new();
-        super::get_all_allnations_products(&config).await.unwrap();
-    }
+#[allow(dead_code)]
+async fn update_allnations_products_from_zunka(
+    config: &Config,
+    product: &Product,
+) -> Result<bool, Box<dyn std::error::Error>> {
+    let prodcut_update = ProductUpdate {
+        storeProductId: product.zunka_product_id.clone(),
+        dealerProductActive: product.active && product.availability,
+        dealerProductPrice: f64::from(product.price_sale) / 100.,
+        storeProductQtd: product.stock_qty,
+    };
 
+    let response = reqwest::Client::new()
+        .post(&format!("{}/setup/product/update", &config.zunkasite_host))
+        .basic_auth(&config.zunkasite_user, Some(&config.zunkasite_pass))
+        .json(&prodcut_update)
+        .send()
+        .await
+        .unwrap();
+
+    Ok(response.status().is_success())
+}
+
+mod test {
     #[tokio::test]
     async fn get_all_allnations_products_codes_from_zunka() {
-        let products = super::get_all_allnations_products_codes_from_zunka()
-            .await
-            .unwrap();
+        let products = super::get_all_allnations_products_codes_from_zunka(
+            &super::super::config::Config::new(),
+        )
+        .await
+        .unwrap();
         println!("products: {:?}", products);
+    }
+
+    // #[tokio::test(core_threads = 1)]
+    #[tokio::test]
+    async fn update_allnations_products_from_zunka() {
+        let config = super::super::config::Config::new();
+        let mut product = super::super::Product::new();
+        product.zunka_product_id = "5f5228665cea0b08536459c0".to_string();
+        product.active = true;
+        product.availability = true;
+        product.stock_qty = 32;
+        product.price_sale = 200000;
+
+        assert!(
+            super::update_allnations_products_from_zunka(&config, &product)
+                .await
+                .unwrap()
+        );
     }
 
     #[test]
@@ -139,14 +114,14 @@ mod test {
         [
             {   
                 "id":"5f50f2e711a5c24a18524d81",
-                "dealerProductId":"0072079",
+                "dealerProductId":"0072071",
                 "dealerProductActive":true,
                 "dealerProductPrice":3300,
                 "storeProductQtd":22
             },
             {
                 "id":"5f5228665cea0b08536459c0",
-                "dealerProductId":"0074532",
+                "dealerProductId":"0074533",
                 "dealerProductActive":true,
                 "dealerProductPrice":30,
                 "storeProductQtd":113
@@ -181,14 +156,14 @@ mod test {
         [
             {   
                 "id":"5f50f2e711a5c24a18524d81",
-                "dealerProductId":"0072079",
+                "dealerProductId":"0072071",
                 "dealerProductActive":true,
                 "dealerProductPrice":3300,
                 "storeProductQtd":22
             },
             {
                 "id":"5f5228665cea0b08536459c0",
-                "dealerProductId":"0074532",
+                "dealerProductId":"0074533",
                 "dealerProductActive":true,
                 "dealerProductPrice":30,
                 "storeProductQtd":113
@@ -219,7 +194,7 @@ mod test {
         [
             {   
                 "id":"5f50f2e711a5c24a18524d81",
-                "dealerProductId":"0072079",
+                "dealerProductId":"0072071",
                 "dealerProductActive":true,
                 "dealerProductPrice":3300,
                 "storeProductQtd":22
