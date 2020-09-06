@@ -49,7 +49,7 @@ lazy_static::lazy_static! {
 }
 
 // Aldo product.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Product {
     pub zunka_product_id: String,
     pub code: String,

@@ -48,9 +48,9 @@ async fn get_all_allnations_products_codes_from_zunka(
 
 #[allow(dead_code)]
 async fn update_allnations_products_from_zunka(
-    config: &Config,
-    product: &Product,
-) -> Result<bool, Box<dyn std::error::Error>> {
+    config: Config,
+    product: Product,
+) -> Result<bool, Box<dyn std::error::Error + Send>> {
     let prodcut_update = ProductUpdate {
         storeProductId: product.zunka_product_id.clone(),
         dealerProductActive: product.active && product.availability,
@@ -66,6 +66,7 @@ async fn update_allnations_products_from_zunka(
         .await
         .unwrap();
 
+    // println!("*** n_update ***");
     Ok(response.status().is_success())
 }
 
@@ -85,17 +86,33 @@ mod test {
     async fn update_allnations_products_from_zunka() {
         let config = super::super::config::Config::new();
         let mut product = super::super::Product::new();
+        // product.zunka_product_id = "6f5228665cea0b08536459c0".to_string();
         product.zunka_product_id = "5f5228665cea0b08536459c0".to_string();
         product.active = true;
         product.availability = true;
         product.stock_qty = 32;
         product.price_sale = 200000;
 
-        assert!(
-            super::update_allnations_products_from_zunka(&config, &product)
-                .await
-                .unwrap()
-        );
+        let product2 = product.clone();
+        let config2 = config.clone();
+
+        let mut joins = Vec::new();
+
+        joins.push(tokio::task::spawn(
+            super::update_allnations_products_from_zunka(config, product),
+        ));
+
+        joins.push(tokio::task::spawn(
+            super::update_allnations_products_from_zunka(config2, product2),
+        ));
+
+        // println!("*** End ***");
+
+        for join in joins {
+            let r = join.await.unwrap().unwrap();
+            assert!(r);
+            // println!("r: {}", r);
+        }
     }
 
     #[test]

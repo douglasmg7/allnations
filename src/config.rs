@@ -1,10 +1,12 @@
 use log::info;
 
+#[derive(Clone)]
 pub struct Filter {
     pub min_price: u32, // Price x 100.
     pub max_price: u32, // Price x 100.
 }
 
+#[derive(Clone)]
 pub struct Config {
     pub run_mode: super::RunMode,
     pub zunkasite_host: String,

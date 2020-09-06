@@ -12,6 +12,7 @@ pub mod macros;
 pub mod product;
 pub mod zunkasite;
 
+#[derive(Clone)]
 pub enum RunMode {
     Prod(),
     Dev(),
