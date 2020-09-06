@@ -20,7 +20,7 @@ pub enum RunMode {
 }
 
 // Run.
-pub fn run<T: std::io::Read>(
+pub async fn run<T: std::io::Read>(
     config: &config::Config,
     file: T,
 ) -> Result<(), Box<dyn std::error::Error>> {
@@ -39,84 +39,19 @@ pub fn run<T: std::io::Read>(
     let mut products = Product::from_xml(file);
 
     // Process products.
-    process_products(&mut products, &mut conn);
+    let changed_products = process_products(&mut products, &mut conn);
 
-    // // Selected categories.
-    // let selected_categories_array = Category::get_all_selected(&conn);
-    // let mut selected_categories = HashSet::new();
-    // for category in selected_categories_array.iter() {
-    // selected_categories.insert(category.name.clone());
-    // }
-
-    // // Create categories.
-    // let mut categories = HashMap::<String, Category>::new();
-    // let products = Product::get_all(&conn);
-    // let mut products_in_use_count = 0;
-    // let mut min_price = u32::MAX;
-    // let mut max_price = u32::MIN;
-    // for product in products.iter() {
-    // match categories.get_mut(&product.category) {
-    // Some(category) => {
-    // category.products_qty += 1;
-    // }
-    // None => {
-    // categories.insert(
-    // product.category.clone(),
-    // Category::new(&product.category, 1, false),
-    // );
-    // }
-    // }
-    // // Products in use.
-    // if selected_categories.contains(&product.category) {
-    // products_in_use_count += 1;
-    // }
-    // // Min price.
-    // if product.price_sale < min_price {
-    // min_price = product.price_sale;
-    // }
-
-    // // Max price.
-    // if product.price_sale > max_price {
-    // max_price = product.price_sale;
-    // }
-    // }
-
-    // // Update categories.
-    // for category in categories.values_mut() {
-    // if selected_categories.contains(&category.name) {
-    // category.selected = true;
-    // }
-    // match Category::get_one(&conn, &category.name) {
-    // Some(db_category) => {
-    // if db_category != *category {
-    // category.update(&conn);
-    // }
-    // }
-    // None => {
-    // category.save(&conn);
-    // }
-    // }
-    // }
-
-    // info!("**********  Resume  **********");
-    // info!("     Total products: {}", products.len());
-    // info!("      Used products: {}", products_in_use_count);
-    // info!(
-    // " Min price products: {}",
-    // formated_price_from_u32(min_price)
-    // );
-    // info!(
-    // " Max price products: {}",
-    // formated_price_from_u32(max_price)
-    // );
-    // info!("     Total category: {}", categories.len());
-    // info!("Selected categories: {}", selected_categories.len());
+    // Update zunkasite products.
+    update_zunka_site(config, &changed_products).await;
 
     Ok(())
 }
 
 /// Proccess products.
-pub fn process_products(products: &mut Vec<Product>, conn: &mut rusqlite::Connection) {
+pub fn process_products(
+    products: &mut Vec<Product>,
+    conn: &mut rusqlite::Connection,
+) -> Vec<Product> {
     let mut total_count = 0;
     let mut changed_count = 0;
     let mut new_count = 0;
@@ -124,6 +59,9 @@ pub fn process_products(products: &mut Vec<Product>, conn: &mut rusqlite::Connec
     let mut not_changed_count = 0;
 
     let now = now!();
+
+    // Changed products, not new.
+    let mut changed_products = Vec::new();
 
     for product in products.iter_mut() {
         total_count += 1;
@@ -166,8 +104,8 @@ pub fn process_products(products: &mut Vec<Product>, conn: &mut rusqlite::Connec
             product.zunka_product_id = db_product.zunka_product_id.clone();
             product.update(&tx);
             tx.commit().unwrap();
-            // todo - Update zunkasite product.
-            // Product same timestamp.
+            // Changed products.
+            changed_products.push(product.clone())
         }
     }
     info!("**********  Products  **********");
@@ -183,6 +121,27 @@ pub fn process_products(products: &mut Vec<Product>, conn: &mut rusqlite::Connec
     }
     if not_changed_count > 0 {
         info!("  Not changed: {}", not_changed_count);
+    }
+
+    changed_products
+}
+
+// Update zunka site with changed products.
+async fn update_zunka_site(config: &config::Config, changed_products: &Vec<Product>) {
+    // Join tasks.
+    let mut joins = Vec::new();
+    // Updated allnations products.
+    for product in changed_products {
+        if !product.zunka_product_id.is_empty() {
+            joins.push(tokio::task::spawn(
+                zunkasite::update_allnations_products_from_zunka(config.clone(), product.clone()),
+            ));
+        }
+    }
+    // Wait all.
+    for join in joins {
+        let res = join.await.unwrap().unwrap();
+        println!("res: {}", res);
     }
 }
 
@@ -232,8 +191,8 @@ mod test {
         assert_eq!(super::formated_price_from_u32(123456789), "R$ 1,234,567.89");
     }
 
-    #[test]
-    fn run() {
+    #[tokio::test]
+    async fn run() {
         // use super::{category::Category, config::Config, logger, product::Product};
         use super::{config::Config, logger, product::Product};
         use std::{fs::File, io::BufReader};
@@ -264,14 +223,18 @@ mod test {
 
         // Run using file a.
         let file = File::open(path_a).unwrap();
-        assert!(super::run(&config, BufReader::new(file)).is_ok());
+        assert!(super::run(&config, BufReader::new(file)).await.is_ok());
         let product = Product::get_one(&conn, "0070495").unwrap();
         assert_eq!(product.price_sale, 206136);
         assert_eq!(Product::get_all_hsitory(&conn).len(), 0);
 
+        // Update zunka id to test update zunka product.
+        // product.zunka_product_id = "5f55305461cacd48fc506464".to_string();
+        // product.update(&conn);
+
         // Run using file b.
         let file = File::open(path_b).unwrap();
-        assert!(super::run(&config, BufReader::new(file)).is_ok());
+        assert!(super::run(&config, BufReader::new(file)).await.is_ok());
         let product = Product::get_one(&conn, "0070495").unwrap();
         assert_eq!(product.price_sale, 207136);
         assert_eq!(Product::get_all_hsitory(&conn)[0].price_sale, 206136);

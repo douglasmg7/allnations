@@ -3,7 +3,8 @@ use lazy_static::lazy_static;
 use log::error;
 use std::process;
 
-fn main() {
+#[tokio::main]
+async fn main() {
     // Configuration.
     lazy_static! {
         static ref CONFIG: Config = Config::new();
@@ -14,7 +15,7 @@ fn main() {
 
     // Run.
     let stdin = std::io::stdin();
-    if let Err(e) = allnations::run(&CONFIG, stdin.lock()) {
+    if let Err(e) = allnations::run(&CONFIG, stdin.lock()).await {
         error!("Application error: {}", e);
         process::exit(1);
     }

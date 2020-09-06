@@ -7,13 +7,13 @@ use std::collections::HashSet;
 
 #[derive(Deserialize, Serialize, Debug)]
 #[allow(non_snake_case)]
-struct ProductResponse {
+pub struct ProductResponse {
     dealerProductId: String,
 }
 
 #[derive(Deserialize, Serialize, Debug)]
 #[allow(non_snake_case)]
-struct ProductUpdate {
+pub struct ProductUpdate {
     storeProductId: String,
     dealerProductActive: bool,
     dealerProductPrice: f64,
@@ -21,7 +21,7 @@ struct ProductUpdate {
 }
 
 #[allow(dead_code)]
-async fn get_all_allnations_products_codes_from_zunka(
+pub async fn get_all_allnations_products_codes_from_zunka(
     config: &Config,
 ) -> Result<HashSet<String>, Box<dyn std::error::Error>> {
     let products_response = reqwest::Client::new()
@@ -47,11 +47,11 @@ async fn get_all_allnations_products_codes_from_zunka(
 }
 
 #[allow(dead_code)]
-async fn update_allnations_products_from_zunka(
+pub async fn update_allnations_products_from_zunka(
     config: Config,
     product: Product,
 ) -> Result<bool, Box<dyn std::error::Error + Send>> {
-    let prodcut_update = ProductUpdate {
+    let product_update = ProductUpdate {
         storeProductId: product.zunka_product_id.clone(),
         dealerProductActive: product.active && product.availability,
         dealerProductPrice: f64::from(product.price_sale) / 100.,
@@ -61,17 +61,22 @@ async fn update_allnations_products_from_zunka(
     let response = reqwest::Client::new()
         .post(&format!("{}/setup/product/update", &config.zunkasite_host))
         .basic_auth(&config.zunkasite_user, Some(&config.zunkasite_pass))
-        .json(&prodcut_update)
+        .json(&product_update)
         .send()
         .await
         .unwrap();
 
-    // println!("*** n_update ***");
+    log::debug!(
+            "Updated zunkasite product, code: {:?}, zunka_product_id: {:?}, description: {:?}, category: {:?}",
+            product.code, product.zunka_product_id, product.description, product.category
+        );
+
     Ok(response.status().is_success())
 }
 
 mod test {
     #[tokio::test]
+    #[ignore]
     async fn get_all_allnations_products_codes_from_zunka() {
         let products = super::get_all_allnations_products_codes_from_zunka(
             &super::super::config::Config::new(),
@@ -83,6 +88,7 @@ mod test {
 
     // #[tokio::test(core_threads = 1)]
     #[tokio::test]
+    #[ignore]
     async fn update_allnations_products_from_zunka() {
         let config = super::super::config::Config::new();
         let mut product = super::super::Product::new();
