@@ -6,23 +6,19 @@
   # exit
 # fi
 
-# CARGOPATH must be defined.
 [[ -z "$CARGOPATH" ]] && printf "error: CARGOPATH enviorment not defined.\n" >&2 && exit 1 
-
-# GS must be defined.
 [[ -z "$GS" ]] && printf "error: GS enviorment not defined.\n" >&2 && exit 1 
-
-# ZUNKAPATH must be defined.
 [[ -z "$ZUNKAPATH" ]] && printf "error: ZUNKAPATH enviorment not defined.\n" >&2 && exit 1 
-
-# ALLNATIONS_DB must be defined.
 [[ -z "$ALLNATIONS_DB" ]] && printf "error: ALLNATIONS_DB enviorment not defined.\n" >&2 && exit 1 
-
-# ALLNATIONS_USER must be defined.
 [[ -z "$ALLNATIONS_USER" ]] && printf "error: ALLNATIONS_USER enviorment not defined.\n" >&2 && exit 1 
-
-# ALLNATIONS_PASS must be defined.
 [[ -z "$ALLNATIONS_PASS" ]] && printf "error: ALLNATIONS_PASS enviorment not defined.\n" >&2 && exit 1 
+
+[[ -z "ZUNKASITE_HOST_DEV" ]] && printf "error: ZUNKASITE_HOST_DEV enviorment not defined.\n" >&2 && exit 1 
+[[ -z "ZUNKASITE_USER_DEV" ]] && printf "error: ZUNKASITE_USER_DEV enviorment not defined.\n" >&2 && exit 1 
+[[ -z "ZUNKASITE_PASS_DEV" ]] && printf "error: ZUNKASITE_PASS_DEV enviorment not defined.\n" >&2 && exit 1 
+[[ -z "ZUNKASITE_HOST_PROD" ]] && printf "error: ZUNKASITE_HOST_PROD enviorment not defined.\n" >&2 && exit 1 
+[[ -z "ZUNKASITE_USER_PROD" ]] && printf "error: ZUNKASITE_USER_PROD enviorment not defined.\n" >&2 && exit 1 
+[[ -z "ZUNKASITE_PASS_PROD" ]] && printf "error: ZUNKASITE_PASS_PROD enviorment not defined.\n" >&2 && exit 1 
 
 # Script not exist.
 [[ ! -f $GS/allnations/bin/fetch-xml-products-and-process.sh ]] && printf "error: script $GS/allnations/bin/fetch-xml-products-and-process.sh not exist.\n" >&2 && exit 1 
@@ -80,7 +76,19 @@ EOF'
 
 # Create aldo service.
 echo "creating '/lib/systemd/system/allnations.service'..."
-sudo GS=$GS ZUNKAPATH=$ZUNKAPATH ALLNATIONS_DB=$ALLNATIONS_DB ALLNATIONS_USER=$ALLNATIONS_USER ALLNATIONS_PASS=$ALLNATIONS_PASS bash -c 'cat << EOF > /lib/systemd/system/allnations.service
+sudo \
+    GS=$GS \
+    ZUNKAPATH=$ZUNKAPATH \
+    ALLNATIONS_DB=$ALLNATIONS_DB \
+    ALLNATIONS_USER=$ALLNATIONS_USER \
+    ALLNATIONS_PASS=$ALLNATIONS_PASS \
+    ZUNKASITE_HOST_DEV=$ZUNKASITE_HOST_DEV \
+    ZUNKASITE_USER_DEV=$ZUNKASITE_USER_DEV \
+    ZUNKASITE_PASS_DEV=$ZUNKASITE_PASS_DEV \
+    ZUNKASITE_HOST_PROD=$ZUNKASITE_HOST_PROD \
+    ZUNKASITE_USER_PROD=$ZUNKASITE_USER_PROD \
+    ZUNKASITE_PASS_PROD=$ZUNKASITE_PASS_PROD \
+    bash -c 'cat << EOF > /lib/systemd/system/allnations.service
 [Unit]
 Description=allnations
 
@@ -93,6 +101,12 @@ Environment="ALLNATIONS_DB=$ALLNATIONS_DB"
 Environment="ALLNATIONS_USER=$ALLNATIONS_USER"
 Environment="ALLNATIONS_PASS=$ALLNATIONS_PASS"
 Environment="RUN_MODE=production"
+Environment="ZUNKASITE_HOST_DEV=$ZUNKASITE_HOST_DEV"
+Environment="ZUNKASITE_USER_DEV=$ZUNKASITE_USER_DEV"
+Environment="ZUNKASITE_PASS_DEV=$ZUNKASITE_PASS_DEV"
+Environment="ZUNKASITE_HOST_PROD=$ZUNKASITE_HOST_PROD"
+Environment="ZUNKASITE_USER_PROD=$ZUNKASITE_USER_PROD"
+Environment="ZUNKASITE_PASS_PROD=$ZUNKASITE_PASS_PROD"
 ExecStart=$GS/allnations/bin/fetch-xml-products-and-process.sh
 EOF'
 

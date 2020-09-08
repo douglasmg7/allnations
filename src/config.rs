@@ -49,12 +49,21 @@ impl Config {
                 run_mode_sufix = "DEV";
             }
         }
-        let zunkasite_host = std::env::var(format!("ZUNKASITE_HOST_{}", run_mode_sufix))
-            .expect("Environment variable ALLNATIONS_DB");
-        let zunkasite_user = std::env::var(format!("ZUNKASITE_USER_{}", run_mode_sufix))
-            .expect("Environment variable ALLNATIONS_DB");
-        let zunkasite_pass = std::env::var(format!("ZUNKASITE_PASS_{}", run_mode_sufix))
-            .expect("Environment variable ALLNATIONS_DB");
+        let zunkasite_host =
+            std::env::var(format!("ZUNKASITE_HOST_{}", run_mode_sufix)).expect(&format!(
+                "Environment variable ZUNKASITE_HOST_{} not defined",
+                run_mode_sufix
+            ));
+        let zunkasite_user =
+            std::env::var(format!("ZUNKASITE_USER_{}", run_mode_sufix)).expect(&format!(
+                "Environment variable ZUNKASITE_USER_{} not defined",
+                run_mode_sufix
+            ));
+        let zunkasite_pass =
+            std::env::var(format!("ZUNKASITE_PASS_{}", run_mode_sufix)).expect(&format!(
+                "Environment variable ZUNKASITE_PASS_{} not defined",
+                run_mode_sufix
+            ));
 
         // Check if db exist.
         std::fs::metadata(&db_filename).expect(&format!("Db file not exit: {}", db_filename));
