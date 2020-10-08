@@ -93,7 +93,7 @@ mod test {
         let config = super::super::config::Config::new();
         let mut product = super::super::Product::new();
         // product.zunka_product_id = "6f5228665cea0b08536459c0".to_string();
-        product.zunka_product_id = "5f5228665cea0b08536459c0".to_string();
+        product.zunka_product_id = "5f7b9ff70a17710aceb36656".to_string();
         product.active = true;
         product.availability = true;
         product.stock_qty = 32;
